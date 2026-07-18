@@ -1,0 +1,10 @@
+{
+  "name": "brag-doc",
+  "description": "Cluster your git/PR contributions in any repo into analysis docs: a theme overview plus per-topic deep dives from PR diffs.",
+  "version": "0.1.0",
+  "author": {
+    "name": "nijesmik",
+    "email": "sejin1398@gmail.com"
+  },
+  "keywords": ["git", "github", "contributions", "analysis"]
+}
