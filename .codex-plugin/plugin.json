@@ -1,0 +1,24 @@
+{
+  "name": "brag-doc",
+  "version": "0.1.1",
+  "description": "Cluster your git/PR contributions in any repo into analysis docs: a theme overview plus per-topic deep dives from PR diffs.",
+  "author": {
+    "name": "nijesmik",
+    "email": "sejin1398@gmail.com"
+  },
+  "repository": "https://github.com/nijesmik/brag-doc",
+  "keywords": ["git", "github", "contributions", "analysis"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "brag-doc",
+    "shortDescription": "Turn your git/PR history into contribution analysis docs",
+    "longDescription": "Collects the PRs and direct commits you authored in the current repo, clusters them into themes, and writes an overview plus per-theme deep dives backed by real PR diffs. Deep dives can then be distilled into resume contribution entries.",
+    "developerName": "nijesmik",
+    "category": "Developer Tools",
+    "defaultPrompt": [
+      "Scan my contributions in this repo and build a theme overview.",
+      "Deep-dive the themes from my brag-doc overview.",
+      "Turn my brag-doc deep dives into resume contribution entries."
+    ]
+  }
+}

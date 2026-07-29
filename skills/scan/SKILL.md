@@ -1,15 +1,15 @@
 ---
-description: Collect and cluster your own contributions in the current repo into <repo-root>/.brag-doc/overview.md
+name: scan
+description: Collect the user's own git/PR contributions in the current repo and cluster them into themes, writing <repo-root>/.brag-doc/overview.md. Use when the user wants to scan, inventory, or start analyzing their contributions in a repo — the first step of brag-doc, before deep-dive or entries.
 ---
-
-## Context
-
-- Repo root: !`git rev-parse --show-toplevel`
 
 ## Mission
 
 Analyze the user's contributions in the current repo and generate `<repo-root>/.brag-doc/overview.md`
 (a `.brag-doc/` folder at the repo root). Follow the steps below in order.
+
+Resolve `<repo-root>` yourself with `git rev-parse --show-toplevel` and use the absolute path
+everywhere below.
 
 **Output language**: overview.md is written in Korean. The template below already carries the Korean
 headings and labels — keep them exactly as-is and fill in only the values.
@@ -32,14 +32,15 @@ Take the first that succeeds:
 Show the detected `baseBranch` to the user (display only, no selection), and pass it to the
 collector in Step 3.
 
-Then confirm with AskUserQuestion:
+Then confirm with the user (in Claude Code use AskUserQuestion with **multiSelect: true**;
+otherwise present a numbered list and ask for a comma-separated pick):
 - Present the authors matching or similar to git user.name as default candidates, and let the user
   **multi-select the author names they have used** (one person commonly uses several names).
 - If the gh login is `none`, tell the user the run will proceed with commits only, without PR collection.
 
 ### Step 2: Re-run check
 
-If `<repo-root>/.brag-doc/raw/prs.json` already exists, confirm with AskUserQuestion:
+If `<repo-root>/.brag-doc/raw/prs.json` already exists, ask the user to choose:
 - "재수집" (recommended default — picks up new PRs/commits) → proceed from Step 3
 - "기존 raw 재사용" (re-cluster only) → skip Step 3 and start from Step 4
 
@@ -47,16 +48,30 @@ If `<repo-root>/.brag-doc/raw/prs.json` already exists, confirm with AskUserQues
 
 ### Step 3: Dispatch the collector agent
 
-Dispatch the `brag-doc:collector` agent. The prompt must include:
+Agent instructions: [references/collector.md](references/collector.md).
+
+- **Claude Code**: dispatch the `brag-doc:collector` agent.
+- **Codex / others**: spawn one `worker` agent told to read the instructions file above and follow
+  it exactly.
+
+The dispatch prompt must include:
 - `repoPath`: absolute path of the repo root
 - `outputDir`: `<repo-root>/.brag-doc/raw` (absolute path)
 - `ghLogin`: the confirmed gh login (`none` if unavailable)
 - `gitAuthors`: the author names confirmed in Step 1
 - `baseBranch`: the default branch detected in Step 1
+- `instructionsFile`: absolute path of `references/collector.md` inside this skill directory
 
 ### Step 4: Dispatch the clusterer agent
 
-Dispatch the `brag-doc:clusterer` agent with the absolute `rawDir` path in the prompt.
+Agent instructions: [references/clusterer.md](references/clusterer.md).
+
+- **Claude Code**: dispatch the `brag-doc:clusterer` agent.
+- **Codex / others**: spawn one `worker` agent told to read the instructions file above and follow
+  it exactly. It must not modify any file.
+
+The dispatch prompt must include the absolute `rawDir` path and `instructionsFile` (absolute path of
+`references/clusterer.md` inside this skill directory).
 Parse the returned JSON. If parsing fails, do not re-dispatch the agent — extract the JSON portion
 from the returned text directly.
 
@@ -103,7 +118,7 @@ Fill the 테마 column from the theme each PR/commit belongs to (`미분류` if 
 checked — `[x](deep-dive/<slug>/index.md)` — in the existing theme table, and preserve the `[x]`
 link **verbatim** for any matching slug in the new table.
 Symmetrically, if the existing theme table has an `항목` column (added by
-`/brag-doc:entries`), keep that column in the re-rendered table and preserve each
+the `entries` skill), keep that column in the re-rendered table and preserve each
 matching slug's `[x](entries/<slug>.md)` value verbatim; non-matching or new rows get
 `[ ]`. If the existing overview has no `항목` column, do not add one.
 
@@ -169,4 +184,5 @@ only these differences:
 ### Step 6: Final report
 
 Summarize the generated file path, the theme count, and the deep-dive candidates (themes with
-signals), and mention that the user can continue with `/brag-doc:deep-dive`.
+signals), and mention that the user can continue with the `deep-dive` skill — naming it the way this
+platform invokes it (`/brag-doc:deep-dive` in Claude Code, `$deep-dive` in Codex).
