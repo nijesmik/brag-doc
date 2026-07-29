@@ -1,6 +1,6 @@
 {
   "name": "brag-doc",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Cluster your git/PR contributions in any repo into analysis docs: a theme overview plus per-topic deep dives from PR diffs.",
   "author": {
     "name": "nijesmik",
