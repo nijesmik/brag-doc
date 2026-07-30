@@ -9,13 +9,13 @@ Works in both Claude Code and Codex.
 ## Install
 
 The plugin is distributed from the [`nijesmik/plugins`](https://github.com/nijesmik/plugins)
-marketplace.
+marketplace, which registers under the name `nijesmik`.
 
 **Claude Code**
 
 ```bash
 claude plugin marketplace add nijesmik/plugins
-claude plugin install brag-doc
+claude plugin install brag-doc@nijesmik
 ```
 
 **Codex**
