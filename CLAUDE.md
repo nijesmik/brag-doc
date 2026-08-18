@@ -26,6 +26,7 @@ Claude Code and Codex**.
 
 ## Conventions
 
-- Generated documents are in Korean; skill/reference prose is in English.
+- Documents generated for the user are in Korean; agent-to-agent intermediates (e.g.
+  `raw/digests/`) and skill/reference prose are in English.
 - `slug` values: English kebab-case. All output lands under `<repo-root>/.brag-doc/`.
 - Agents return compact JSON or count summaries, never file contents, to the main context.

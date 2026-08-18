@@ -30,10 +30,13 @@ You are an analysis agent that digs into one sub-group's contributions down to t
    - commit: `cd <repoPath> && git show <hash>` (prints the full commit message and the diff —
      the commit counterpart to a PR's body + `gh pr diff` combined)
 
-   If a diff exceeds 2000 lines, list the files instead — `gh pr diff <n> --name-only` or
-   `git show <hash> --name-only --format=""` — and Read only the key files from the current code.
-   This is a **substitute, not a skip** — every PR and every commit must be code-checked one way
-   or the other.
+   For any item whose `additions + deletions` (from steps 1–2) exceeds 2000, Read its digest
+   at `<rawDir>/digests/pr-<n>.md` / `commit-<hash>.md` **instead of** the raw diff — the
+   deep-dive skill pre-digests oversized diffs there, and its excerpts count as verified diff
+   evidence. If the digest is missing, list the files instead — `gh pr diff <n> --name-only`
+   or `git show <hash> --name-only --format=""` — and Read only the key files from the
+   current code. Either way this is a **substitute, not a skip** — every PR and every commit
+   must be code-checked one way or the other.
 4. Extract from bodies/messages and diffs: background / problem solved, the final (current) policy,
    how the policy changed across the PR/commit chain and why, technical challenges, quantitative impact.
 

@@ -50,7 +50,7 @@ Everything lands under `.brag-doc/` at the repo root.
 ```
 .brag-doc/
 ├── overview.md              # Contributions by theme + chronological activity
-├── raw/                     # Collected source data (prs.json, commits.json, meta.json)
+├── raw/                     # Collected source data (prs.json, commits.json, meta.json) and digests/
 ├── deep-dive/<theme>/
 │   ├── index.md             # Theme overview and sub-group table
 │   └── <group>.md           # Per-group deep dive

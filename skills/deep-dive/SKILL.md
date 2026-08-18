@@ -60,6 +60,38 @@ portion from the returned text directly.
 union of the groups' `commits` must equal the theme's `commits`. If any PR or commit is missing,
 add it to the most relevant group yourself before Step 4.
 
+### Step 3.5: Dispatch diff-digester agents in parallel
+
+Agent instructions: [references/diff-digester.md](references/diff-digester.md).
+
+Find the oversized items among the selected themes' PRs and commits (line changes > 2000):
+
+```bash
+jq '[.[] | select((.additions + .deletions) > 2000) | .number]' <rawDir>/prs.json
+jq '[.[] | select((.additions + .deletions) > 2000) | .hash]' <rawDir>/commits.json
+```
+
+Intersect with the selected themes' `prs`/`commits`, then drop every item whose digest file
+already exists (`<rawDir>/digests/pr-<n>.md` / `commit-<hash>.md` — merged diffs never change,
+so old digests stay valid). If nothing remains, skip this step.
+
+Run `mkdir -p <rawDir>/digests`, then **one agent per remaining item, all concurrently** —
+these agents do not depend on Step 3's results, so dispatch them together with the
+theme-groupers when possible:
+
+- **Claude Code**: dispatch that many `brag-doc:diff-digester` agents **in a single message**.
+- **Codex / others**: spawn that many `worker` agents, each told to read the instructions file
+  above and follow it exactly.
+
+Each dispatch prompt must include:
+- `repoPath`: absolute path of the repo root
+- `kind`: `"pr"` or `"commit"`, and `ref`: the PR number or commit short hash
+- `outputFile`: `<rawDir>/digests/pr-<n>.md` or `<rawDir>/digests/commit-<hash>.md` (absolute path)
+- `instructionsFile`: absolute path of `references/diff-digester.md` inside this skill directory
+
+Each agent returns a JSON summary: `{ref, outputFile, files, size}`. Verify each `outputFile`
+exists before Step 4; re-run the missing ones once.
+
 ### Step 4: Dispatch pr-analyzer agents in parallel
 
 Prepare the output directories first. For each selected theme:
