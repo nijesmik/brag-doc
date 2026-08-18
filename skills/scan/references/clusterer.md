@@ -30,7 +30,8 @@ You do not modify files. Your final message must be a single JSON object and not
    `unclustered` keeps the same object shape here: `{"prs": [], "commits": [...]}`.
 4. Clustering criteria:
    - **Meaning-based.** Do not group by mechanical rules such as labels or file paths.
-   - 3–10 themes. One theme = "a unit of work you can explain in one paragraph".
+   - One theme = "a unit of work you can explain in one paragraph". Create as many themes
+     as the work calls for.
    - Do not force-group. When in doubt, send it to `unclustered`.
    - **No omissions**: every PR number must appear in exactly one place (some theme, or
      unclustered). For commits, the complete population differs by mode: in **normal mode** it is

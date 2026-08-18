@@ -20,7 +20,9 @@ First, determine the current identity by running these yourself (do **not** rely
 injection — these commands require permission on a fresh install):
 - `git config user.name` and `git config user.email` → the local git user
 - `gh api user --jq .login 2>/dev/null || echo none` → the GitHub login (`none` if not logged in)
-- `git shortlog -sn HEAD | head -25` → the repo's author list
+- `git shortlog -sne HEAD | head -25` → the repo's top authors, then
+  `git shortlog -sne HEAD | grep -iF <user.name or user.email>` → the user's entries even
+  when they sit far down the list
 
 Also detect the repo's **default branch** (`baseBranch`) — all collection is anchored to it.
 Take the first that succeeds:

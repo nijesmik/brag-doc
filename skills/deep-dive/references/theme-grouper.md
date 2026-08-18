@@ -38,7 +38,7 @@ Either array may be empty, but both are always provided.
   group that exists solely to park commits — a commit belongs with the feature it touched.
 - **No omissions**: every PR number and every commit hash must appear in exactly one group.
   There is no "unclustered" — when in doubt, assign it to the closest feature group.
-- Target 2–8 items (PRs + commits combined) per group. If the theme is small, a single group is fine.
+- A single-item group is fine, and so is a large one when the feature really is that big.
 - PR/commit chains that repeatedly modified the same feature/policy MUST land in the same group —
   the analyzer uses them to trace how the policy evolved.
 - `slug`: English kebab-case (used as the group filename). `title`, `summary`: Korean.

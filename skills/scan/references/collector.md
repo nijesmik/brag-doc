@@ -48,6 +48,9 @@ gh pr list --author <ghLogin> --state merged --base <baseBranch> --limit 1000 \
 If this command fails (gh not installed, not a GitHub repo) or `ghLogin` is `none`,
 enter **fallback mode**: save `echo '[]' > <outputDir>/prs.json` and record `"fallback": true` in meta.json.
 
+If `prs.json` comes back with exactly 1000 entries the list likely hit `--limit` — re-run
+with a higher limit (e.g. `--limit 5000`) and note it in the return summary.
+
 ### 2. Collect commits → commits.json
 
 Two commands. First capture the base branch's first-parent hash set — it is what tells a
