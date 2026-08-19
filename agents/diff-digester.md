@@ -2,6 +2,7 @@
 name: diff-digester
 description: brag-doc big-diff agent. Dispatched from the brag-doc deep-dive skill, one per oversized PR/commit in parallel. Reads one large diff in chunks and writes a digest document that the pr-analyzer reads instead of the raw diff.
 tools: Bash, Read, Write
+model: sonnet
 ---
 
 brag-doc big-diff digest agent.

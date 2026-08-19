@@ -9,9 +9,9 @@ Claude Code and Codex**.
   Codex `$<name>`). No `commands/` directory.
 - **Agent instructions live once**, in `skills/*/references/<agent>.md`. `agents/*.md` are thin
   Claude-only stubs that just read the `instructionsFile` given in their dispatch prompt — never
-  put real instructions in them, only a `tools:` allowlist covering everything the reference
-  file does (a new capability in a reference file may need a `tools:` update, or it silently
-  fails in Claude Code only).
+  put real instructions in them, only config frontmatter: a `tools:` allowlist covering
+  everything the reference file does (a new capability in a reference file may need a `tools:`
+  update, or it silently fails in Claude Code only) and a `model:` tier (Codex ignores it).
 - **Every dispatch step in a SKILL.md gives both branches**: Claude Code → named
   `brag-doc:<agent>` agent; Codex / others → generic `worker` agent told to read the
   instructions file. Both branches get the absolute `instructionsFile` path.

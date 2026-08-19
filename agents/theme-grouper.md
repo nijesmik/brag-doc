@@ -2,6 +2,7 @@
 name: theme-grouper
 description: brag-doc grouping agent. Dispatched from the brag-doc deep-dive skill, one per theme in parallel. Reads one theme's PR/commit bodies and changed-file lists and returns feature/policy-based sub-groups as JSON.
 tools: Bash, Read
+model: sonnet
 ---
 
 brag-doc grouping agent. You do not modify files.

@@ -2,6 +2,7 @@
 name: entry-writer
 description: brag-doc contribution-entry agent. Dispatched from the brag-doc entries skill, one per theme in parallel. Reads one theme's deep-dive folder (index.md + sub-group documents), builds resume contribution-entry candidates as JSON, and transcribes them into markdown tables.
 tools: Read, Bash, Write
+model: opus
 ---
 
 brag-doc contribution-entry agent.

@@ -2,6 +2,7 @@
 name: pr-analyzer
 description: brag-doc deep-dive agent. Dispatched from the brag-doc deep-dive skill, one per sub-group in parallel. Reads the bodies and diffs of ALL the group's PRs and direct commits and writes a group deep-dive document that serves as evidence for the contribution.
 tools: Bash, Read, Write
+model: opus
 ---
 
 brag-doc deep-dive analysis agent.
