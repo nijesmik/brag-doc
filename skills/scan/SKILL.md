@@ -155,6 +155,11 @@ commit-only is fine — and if both `prs` and `commits` are empty, omit the enti
 - 관련 커밋: a1b2c3d, e4f5g6h (omit this line when the theme has no direct commits)
 - 심층 분석 후보 신호: <signals comma-separated; "없음" if none>
 
+## 미분류
+
+- #381 <title> (one-line summary in Korean)
+- `f7g8h9i` <subject> (one-line summary in Korean)
+
 ## 시간순 활동
 
 ### 2026-05
@@ -164,11 +169,6 @@ commit-only is fine — and if both `prs` and `commits` are empty, omit the enti
 | 05-11 | PR | #384 | 블랙박스 0-byte PUT 회귀 수정 | 블랙박스 사진 업로드 파이프라인 |
 | 05-11 | 커밋 | `a1b2c3d` | HEIC 변환 타임아웃 30초로 상향 | 블랙박스 사진 업로드 파이프라인 |
 | 05-12 | PR | #387 | 모달/바텀시트 하드백 처리 | 웹뷰 내비게이션/뒤로가기 정책 |
-
-## 미분류
-
-- #381 <title> (one-line summary in Korean)
-- `f7g8h9i` <subject> (one-line summary in Korean)
 ```
 
 **Fallback-mode rendering** (when `fallback` in `meta.json` is `true`): use the same template with
