@@ -32,7 +32,8 @@ Also read `<repo-root>/.brag-doc/raw/meta.json`; if its `fallback` field is `tru
 could not collect PRs (`raw/prs.json` is `[]`, not missing) — tell the user that deep-dive is not
 supported in fallback mode (out of scope for now), and stop.
 
-For each selected theme, read both `관련 PR:` and `관련 커밋:` from its section in overview.md.
+For each selected theme, read its slug (backticked in the `주제` cell) and its PR numbers and
+commit hashes from the `관련 기여` cell of its row in the overview theme table.
 A theme may have only PRs, only commits, or both — pass whichever exist, using `[]` for the other.
 
 ### Step 3: Dispatch theme-grouper agents in parallel
@@ -50,7 +51,8 @@ Each dispatch prompt must include:
 - `repoPath`: absolute path of the repo root
 - `rawDir`: `<repo-root>/.brag-doc/raw` (absolute path)
 - Theme info: `slug`, `title`, `prs` number array, `commits` short-hash array
-  (both extracted from the theme's section in the overview; pass `[]` when a theme has none)
+  (both extracted from the theme's `관련 기여` cell in the overview theme table; pass `[]` when a
+  theme has none)
 - `instructionsFile`: absolute path of `references/theme-grouper.md` inside this skill directory
 
 Parse each returned JSON. If parsing fails, do not re-dispatch the agent — extract the JSON
@@ -124,7 +126,8 @@ deep-dive directory and re-run the missing groups' agents before rendering index
 ### Step 5: Render index.md yourself
 
 For each analyzed theme, render `<repo-root>/.brag-doc/deep-dive/<slug>/index.md` **yourself —
-do not delegate this to an agent** — from the theme's section in overview.md, the
+do not delegate this to an agent** — from the theme's row in overview.md's theme table (title,
+slug, `요약`, `관련 기여`, `기간`, `규모`), the
 group objects from Step 3 (slug, title, prs, commits, summary), and the analyzer summaries
 returned in Step 4 (oneLiner, keyDecisions, size).
 

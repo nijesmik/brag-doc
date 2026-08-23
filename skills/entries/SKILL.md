@@ -52,8 +52,8 @@ If an `entries/<slug>.md` already exists, it will be overwritten — note this i
 
 ### Step 4: Update the overview
 
-In `overview.md`'s theme table (header `| # | 주제 | 기여 | 기간 | 규모 | 심층 |`), ensure a `항목`
-column exists immediately after the `심층` column (add it to the header row, the separator row, and
+In `overview.md`'s theme table (header `| # | 주제 | 요약 | 관련 기여 | 기간 | 규모 | 신호 | 심층 |`),
+ensure a `항목` column exists immediately after the `심층` column (add it to the header row, the separator row, and
 every data row — existing rows get `[ ]`). Set each generated theme's `항목` cell to
 `[x](entries/<slug>.md)`. Leave the rest as `[ ]`.
 

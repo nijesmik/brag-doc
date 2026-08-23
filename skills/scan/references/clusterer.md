@@ -69,6 +69,7 @@ Your final message must be exactly the JSON below with no code fences (the main 
 ```
 
 - `slug`: English kebab-case, used as the deep-dive/ folder name
+- `summary`: one sentence on a single line — it is rendered inside a table cell in overview.md
 - `prs` / `commits`: the theme's PR numbers, and its commit short hashes. The meaning of `commits`
   is mode-dependent: in **normal mode** it holds only direct commits (step 2's three-condition
   filter — other commits are already represented by their PR and are omitted); in **fallback

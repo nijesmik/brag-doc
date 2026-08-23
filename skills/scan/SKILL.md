@@ -87,7 +87,7 @@ month key and day together). Use the **normal-mode** command when `raw/meta.json
 `false`/absent; use the **fallback-mode** command when it is `true` — do not use the normal-mode
 command in fallback mode, its `select` silently drops commits (a `(#N)` squash-merge subject, a
 merge commit with `parents >= 2`, a commit off the first-parent line) that the clusterer still
-counted into the theme table, `관련 커밋`, `미분류`, and `directCommitCount`.
+counted into the theme table's `관련 기여` column, `미분류`, and `directCommitCount`.
 
 Normal mode (`firstParent && pr == null && parents < 2`, i.e. direct commits only):
 
@@ -124,10 +124,18 @@ the `entries` skill), keep that column in the re-rendered table and preserve eac
 matching slug's `[x](entries/<slug>.md)` value verbatim; non-matching or new rows get
 `[ ]`. If the existing overview has no `항목` column, do not add one.
 
-Template (keep the Korean headings/labels as-is; fill in the values). Every theme section must
-include its `- slug: <slug>` line — deep-dive uses it as the `deep-dive/` folder name. In the theme
-table's `기여` column, omit whichever side is empty: if `commits` is empty, write only `PR <n>개`;
-if `prs` is empty, write only `커밋 <n>개`. In `## 미분류`, omit whichever list is empty — PR-only or
+Template (keep the Korean headings/labels as-is; fill in the values). All per-theme data lives in
+the theme table — do not add per-theme sections. Table rules:
+
+- `주제` cell: the theme title followed by its slug in backticks, in parentheses — deep-dive uses
+  the slug as the `deep-dive/` folder name.
+- `요약` cell: the theme's `summary`, on a single line.
+- `관련 기여` cell: the counts with every ref in parentheses —
+  ``PR <prs count>개 (#367, #380, ...) · 커밋 <commits count>개 (`a1b2c3d`, ...)``, commit hashes
+  in backticks. Omit whichever side is empty (and the ` · ` separator with it).
+- `신호` cell: the theme's signals comma-separated; `없음` if none.
+
+In `## 미분류`, omit whichever list is empty — PR-only or
 commit-only is fine — and if both `prs` and `commits` are empty, omit the entire `## 미분류` section:
 
 ```markdown
@@ -142,18 +150,9 @@ commit-only is fine — and if both `prs` and `commits` are empty, omit the enti
 
 ## 주제별 기여
 
-| # | 주제 | 기여 | 기간 | 규모 | 심층 |
-|---|------|------|------|------|------|
-| 1 | <title> | PR <prs count>개 · 커밋 <commits count>개 | <period> | +<additions>/-<deletions> | [ ] |
-
-### 1. <title>
-
-<summary>
-
-- slug: <slug>
-- 관련 PR: #367, #380, ... (omit this line when the theme has no PRs)
-- 관련 커밋: a1b2c3d, e4f5g6h (omit this line when the theme has no direct commits)
-- 심층 분석 후보 신호: <signals comma-separated; "없음" if none>
+| # | 주제 | 요약 | 관련 기여 | 기간 | 규모 | 신호 | 심층 |
+|---|------|------|-----------|------|------|------|------|
+| 1 | <title> (`<slug>`) | <summary> | PR 2개 (#367, #380) · 커밋 2개 (`a1b2c3d`, `e4f5g6h`) | <period> | +<additions>/-<deletions> | <signals> | [ ] |
 
 ## 미분류
 
@@ -174,11 +173,10 @@ commit-only is fine — and if both `prs` and `commits` are empty, omit the enti
 **Fallback-mode rendering** (when `fallback` in `meta.json` is `true`): use the same template with
 only these differences:
 
-- In the theme table, the `기여` column holds only `커밋 <n>개` and the `규모` column is `—`.
-- In each theme section, omit the `관련 PR` line and write only `관련 커밋`.
+- In the theme table, the `관련 기여` column holds only `커밋 <n>개 (…)` and the `규모` column is `—`.
 - Build `## 시간순 활동` with the **fallback mode** extraction command above — it must include every
-  commit (no `select`) so that the theme table, `관련 커밋`, `미분류`, `directCommitCount`, and the
-  chronological activity stay consistent with each other.
+  commit (no `select`) so that the theme table's `관련 기여` column, `미분류`, `directCommitCount`,
+  and the chronological activity stay consistent with each other.
 - On the 규모 line, `직접 커밋 <n>개` ends up equal to `커밋 총 <n>개`, because without PR records
   every commit counts as a direct commit. Even if that looks misleading, do not hide the number or
   recompute it — expose exactly what the clusterer returned.
