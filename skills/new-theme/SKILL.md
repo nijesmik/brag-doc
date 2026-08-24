@@ -5,9 +5,9 @@ description: Pick items out of the 미분류 (unclustered) section of an existin
 
 ## Mission
 
-Move user-chosen items out of the `## 미분류` section of `<repo-root>/.brag-doc/overview.md` and
-append them to the theme table as a new theme row, so the `deep-dive` skill can analyze them later.
-Edit overview.md yourself — no agents are dispatched.
+Move user-chosen items out of the `## 미분류` section and append them to the theme table as a new
+theme row, so the `deep-dive` skill can analyze them later. Edit `<repo-root>/.brag-doc/data/themes.json`
+yourself and re-render `overview.md` from it — no agents are dispatched.
 
 Resolve `<repo-root>` yourself with `git rev-parse --show-toplevel` and use the absolute path
 everywhere below.
@@ -23,6 +23,11 @@ skill first, and stop.
 
 If it has no `## 미분류` section (or the section has no bullets), tell the user there is nothing to
 pick, and stop.
+
+Call `<repo-root>/.brag-doc/data` `<dataDir>` below. If `<dataDir>/themes.json` is missing,
+rebuild it from the legacy overview.md first by following
+[../scan/references/rebuild-themes.md](../scan/references/rebuild-themes.md) (paths are relative
+to this skill's directory). If the rebuild validation fails, stop as that procedure says.
 
 Call `<repo-root>/.brag-doc/raw` `<rawDir>` below. If `<rawDir>/prs.json` or
 `<rawDir>/commits.json` is missing, Step 4 cannot compute the new row — tell the user to run the
@@ -46,19 +51,26 @@ Each `## 미분류` bullet starts with its ref: `- #<n> …` for a PR, `` - `<ha
 Picking every bullet is fine. Call the result `pickedPrs` (number array) and `pickedCommits`
 (short-hash array) below; either may be empty, not both.
 
+**Guard against a stale overview.md**: verify every ref in `pickedPrs`/`pickedCommits` is actually
+present in `<dataDir>/themes.json`'s `unclustered.prs`/`unclustered.commits` (e.g.
+`jq --argjson nums "$pickedPrs" --argjson hashes "$pickedCommits" '($nums - .unclustered.prs) +
+($hashes - .unclustered.commits)' <dataDir>/themes.json` must print `[]`). If any ref is missing
+there, report the offending refs and stop **without editing anything** — the same
+no-partial-application rule as above.
+
 ### Step 3: Name the theme
 
 Ask the user for a theme title in Korean, offering `미분류 선별` as the default (in Claude Code use
 AskUserQuestion with that default as the first option — the user can type their own via Other;
-otherwise ask as free text, empty answer → default). If the title already appears in the theme
-table, ask for a different one — the `시간순 활동` tables reference themes by title, so a duplicate
-would be ambiguous.
+otherwise ask as free text, empty answer → default). If the title already appears in
+`themes.json`'s `themes[].title`, ask for a different one — the `시간순 활동` tables reference
+themes by title, so a duplicate would be ambiguous.
 
 Derive the `slug` yourself: an English kebab-case translation of the title. If that slug already
-appears in the theme table or as a `deep-dive/<slug>/` folder, append `-2`, `-3`, … until it is
+appears among `themes[].slug` or as a `deep-dive/<slug>/` folder, append `-2`, `-3`, … until it is
 unique.
 
-### Step 4: Edit overview.md
+### Step 4: Edit themes.json and re-render
 
 Compute the new row's `기간` and `규모` from the raw files (substitute `pickedPrs`/`pickedCommits`
 into `$nums`/`$hashes`):
@@ -82,18 +94,27 @@ jq -n -r --slurpfile prs <rawDir>/prs.json --slurpfile commits <rawDir>/commits.
 **Fallback mode** (`fallback: true` in meta.json): skip the second command and use `—` for
 `규모`, matching the other fallback-mode rows.
 
-Then make three edits:
+Then update `<dataDir>/themes.json` — append the new theme and remove the picked refs from
+`unclustered` in one jq pass (substitute the computed values into `$theme`):
 
-1. **Append the theme row** at the bottom of the theme table, numbered one past the last row:
-   ``| <n+1> | <title> (`<slug>`) | 미분류에서 선별한 항목 | <관련 기여> | <기간> | <규모> | 없음 | [ ] |``
-   — the `관련 기여` cell follows the scan skill's format:
-   ``PR <k>개 (#381, …) · 커밋 <m>개 (`f7g8h9i`, …)``, each side's refs in chronological
-   order, omitting whichever side is empty (and the ` · ` separator with it). If the table has an `항목` column, give the new row `[ ]` there too.
-2. **Remove the picked bullets** from `## 미분류`. If no bullets remain, remove the whole section,
-   heading included.
-3. **Re-theme the chronological rows**: in the `## 시간순 활동` monthly tables, change the `테마`
-   cell from `미분류` to the new title on every row whose `항목` cell is a picked ref (`#<n>` or
-   `` `<hash>` ``).
+```bash
+jq --argjson theme '{
+  "slug": "<slug>", "title": "<title>", "summary": "미분류에서 선별한 항목",
+  "prs": <pickedPrs>, "commits": <pickedCommits>,
+  "period": "<기간>", "size": {"additions": <n>, "deletions": <n>}, "signals": []
+}' '
+  .themes += [$theme]
+  | .unclustered.prs -= $theme.prs
+  | .unclustered.commits -= $theme.commits
+' <dataDir>/themes.json > <dataDir>/themes.json.tmp && mv <dataDir>/themes.json.tmp <dataDir>/themes.json
+```
+
+In fallback mode omit the `size` key from `$theme` entirely (matching the clusterer contract).
+
+Then re-render `overview.md` by following
+[../scan/references/render-overview.md](../scan/references/render-overview.md) — the new theme
+row, the shrunken `## 미분류` section, and the re-themed `## 시간순 활동` cells all come out of
+the render; do not hand-edit overview.md.
 
 ### Step 5: Final report
 
@@ -101,5 +122,5 @@ Report the new row — title, slug, refs, `기간`/`규모` — and how many 미
 user the theme can now be analyzed with the `deep-dive` skill — naming it the way this platform
 invokes it (`/brag-doc:deep-dive` in Claude Code, `$deep-dive` in Codex). In fallback mode, note
 instead that deep-dive does not support fallback-mode data, so the row documents the grouping only.
-Also mention that re-running `scan` re-clusters from scratch, so this hand-made row will not
-survive a re-scan.
+Also mention durability: the hand-made theme now lives in `data/themes.json`, so it survives
+"문서만 재렌더"; but "재수집" and "재클러스터" rebuild themes.json from scratch and will drop it.
