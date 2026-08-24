@@ -14,11 +14,18 @@ everywhere below.
 
 ### Step 1: Check the data
 
-Call `<repo-root>/.brag-doc/data` `<dataDir>` below. Read `<dataDir>/themes.json`:
+Call `<repo-root>/.brag-doc/raw` `<rawDir>` and `<repo-root>/.brag-doc/data` `<dataDir>` below.
+
+`<rawDir>` is required on every path — the agents read PR bodies and diffs out of it. If
+`<rawDir>/prs.json`, `<rawDir>/commits.json`, or `<rawDir>/meta.json` is missing, tell the user to
+run the `scan` skill (re-collect) first, and stop.
+
+Then read `<dataDir>/themes.json`:
 - **If it is missing but `<repo-root>/.brag-doc/overview.md` exists** (a legacy run), rebuild it
   first by following
   [../scan/references/rebuild-themes.md](../scan/references/rebuild-themes.md) (paths are relative
-  to this skill's directory). If the rebuild validation fails, stop as that procedure says.
+  to this skill's directory). Its `raw/` inputs are already checked above. If the rebuild
+  validation fails, stop as that procedure says.
 - **If neither exists**, tell the user to run the `scan` skill first, and stop.
 
 ### Step 2: Theme selection (interactive)
@@ -31,12 +38,9 @@ If every theme already has an index.md, say so and stop. (For re-analysis, the u
 theme directly — an already-analyzed theme is simply re-analyzed from scratch; there is no
 render-only mode for deep-dive documents.)
 
-If `raw/prs.json` is missing, the agents cannot read PR bodies — check before dispatching and,
-if missing, tell the user to run the `scan` skill (re-collect) first.
-
-Also read `<repo-root>/.brag-doc/raw/meta.json`; if its `fallback` field is `true`, the collector
-could not collect PRs (`raw/prs.json` is `[]`, not missing) — tell the user that deep-dive is not
-supported in fallback mode (out of scope for now), and stop.
+Read `<rawDir>/meta.json`; if its `fallback` field is `true`, the collector could not collect PRs
+(`raw/prs.json` is `[]`, not missing) — tell the user that deep-dive is not supported in fallback
+mode (out of scope for now), and stop.
 
 For each selected theme, take `slug`, `title`, `prs`, and `commits` straight from its object in
 `themes.json` — never parse them out of overview.md.
@@ -169,7 +173,9 @@ The frontmatter starts on line 1 of the document and keeps the key order of the 
 direct-commit short hashes, **both exhaustive**; when the theme has none of that kind, leave an
 empty array `[]` rather than dropping the key. Every other value — `theme`, each commit hash,
 `period`, `size` — must be double-quoted, so that a title containing `:` or a hash that looks
-numeric (`1234567`, `1e23456`) cannot break the YAML.
+numeric (`1234567`, `1e23456`) cannot break the YAML. The `size` value is the abbreviated display
+string rendered from the theme's `size.additions`/`size.deletions` integers in `themes.json`
+(`{"additions": 4200, "deletions": 1600}` → `"+4.2k/-1.6k"`).
 
 The `PR·커밋` cell of the `하위 그룹` table lists, in a single cell, **every** PR number (`#367`)
 and direct-commit short hash (`` `a1b2c3d` ``) belonging to that group: the group object's `prs`

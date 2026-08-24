@@ -18,11 +18,23 @@ Call `<repo-root>/.brag-doc/data` `<dataDir>` below. Read `<dataDir>/themes.json
 - **If it is missing but `<repo-root>/.brag-doc/overview.md` exists** (a legacy run), rebuild it
   first by following
   [../scan/references/rebuild-themes.md](../scan/references/rebuild-themes.md) (paths are relative
-  to this skill's directory). If the rebuild validation fails, stop as that procedure says.
+  to this skill's directory). That rebuild — and only it — needs `raw/`: check that
+  `<repo-root>/.brag-doc/raw/prs.json`, `commits.json`, and `meta.json` all exist **before**
+  starting it, and if any is missing tell the user to run the `scan` skill (re-collect) first, and
+  stop. If the rebuild validation fails, stop as that procedure says.
 - **If neither exists**, tell the user to run the `scan` skill and then the `deep-dive` skill
   first, and stop.
 
+Outside that legacy path `entries` never reads `raw/` — a run with `data/themes.json` already on
+disk works with `raw/` pruned.
+
 ### Step 2: Theme selection (interactive)
+
+Legacy layout, before the selection below: for each theme whose
+`<repo-root>/.brag-doc/entries/<slug>.json` exists (pre-0.3.0 runs kept the JSON next to the .md),
+run `mkdir -p <repo-root>/.brag-doc/data/entries` and `mv` it to
+`<repo-root>/.brag-doc/data/entries/<slug>.json`. Do this first so the offer below and every later
+run see the JSON in its new home.
 
 Present the themes in `themes.json` that have an existing
 `<repo-root>/.brag-doc/deep-dive/<slug>/index.md` and let the user pick several (in Claude Code
@@ -31,17 +43,16 @@ comma-separated pick). Put each theme's title and PR count in the option descrip
 - If no theme has a deep-dive folder, tell the user to run the `deep-dive` skill first, and stop.
 - (If a selected theme already has `<repo-root>/.brag-doc/entries/<slug>.md`, ask the user per
   theme: "재생성" — dispatch the agent normally, or "문서만 재전사" — dispatch it with
-  `transcribeOnly: true` so it only re-renders the .md from the existing JSON.)
+  `transcribeOnly: true` so it only re-renders the .md from the existing JSON. Offer "문서만 재전사"
+  **only when `<repo-root>/.brag-doc/data/entries/<slug>.json` also exists** after the `mv` above —
+  with no JSON there is nothing to transcribe, so 재생성 is then the only option and no question is
+  asked.)
 
 ### Step 3: Dispatch entry-writer agents in parallel
 
 For each selected theme, verify that `<repo-root>/.brag-doc/deep-dive/<slug>/index.md` exists; if missing, skip that theme and inform the user to run the `deep-dive` skill again to regenerate the folder.
 
 Create `<repo-root>/.brag-doc/data/entries/` and `<repo-root>/.brag-doc/entries/` if missing.
-
-Legacy layout: if `<repo-root>/.brag-doc/entries/<slug>.json` exists (pre-0.3.0 runs kept the
-JSON next to the .md), `mv` it to `<repo-root>/.brag-doc/data/entries/<slug>.json` before
-dispatching, so `transcribeOnly` and future runs find it in the new home.
 
 Agent instructions: [references/entry-writer.md](references/entry-writer.md).
 
@@ -53,8 +64,8 @@ exactly that many.
   and follow it exactly.
 
 Each dispatch prompt must include:
-- `themeDoc`: `<repo-root>/.brag-doc/deep-dive/<slug>/index.md` (absolute path — the target of the
-  theme's 심층 link in overview.md)
+- `themeDoc`: `<repo-root>/.brag-doc/deep-dive/<slug>/index.md` (absolute path — the theme's
+  deep-dive index)
 - `slug`, `title`
 - `outputJson`: `<repo-root>/.brag-doc/data/entries/<slug>.json` (absolute path)
 - `outputMd`: `<repo-root>/.brag-doc/entries/<slug>.md` (absolute path)

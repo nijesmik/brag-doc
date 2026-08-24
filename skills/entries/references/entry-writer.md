@@ -15,7 +15,9 @@ transcribe that JSON into the markdown tables**.
 - `outputJson`: absolute path for the JSON output (`…/data/entries/<slug>.json`).
 - `outputMd`: absolute path for the markdown output (`…/entries/<slug>.md`).
 - `transcribeOnly` (optional): when `true`, skip Procedure steps 1–3, read the existing
-  `outputJson`, and perform only step 4 (transcribe the tables to `outputMd`).
+  `outputJson`, and perform only step 4 (transcribe the tables to `outputMd`). If `outputJson`
+  does not exist, stop and report that — never fall back to rebuilding the entries from the
+  deep-dive documents.
 
 ## Procedure
 
