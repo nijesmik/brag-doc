@@ -50,7 +50,9 @@ AskUserQuestion; otherwise a numbered list):
 - "문서만 재렌더" — only offer this option when `data/themes.json` **or** a legacy `overview.md`
   exists. Zero agent dispatches: if `data/themes.json` is missing, first rebuild it from the
   legacy overview.md by following
-  [references/rebuild-themes.md](references/rebuild-themes.md), then jump straight to Step 5
+  [references/rebuild-themes.md](references/rebuild-themes.md) — that rebuild also needs
+  `raw/commits.json` and `raw/meta.json`, so check both exist before starting it and, if either is
+  missing, tell the user to re-run `scan` with "재수집" and stop. Then jump straight to Step 5
   (render) and Step 6. Content stays identical; only the document format is refreshed — this is
   the choice to use after a plugin update.
 
