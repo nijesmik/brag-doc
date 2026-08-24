@@ -30,3 +30,6 @@ Claude Code and Codex**.
   `raw/digests/`) and skill/reference prose are in English.
 - `slug` values: English kebab-case. All output lands under `<repo-root>/.brag-doc/`.
 - Agents return compact JSON or count summaries, never file contents, to the main context.
+- Structured state lives in `.brag-doc/data/*.json` (source of truth); `.md` outputs are render
+  artifacts. Skills communicate through the JSON — never by parsing rendered markdown. The
+  `심층`/`항목` checkboxes in overview.md are derived from file existence at render time.
