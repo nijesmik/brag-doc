@@ -31,5 +31,8 @@ Claude Code and Codex**.
 - `slug` values: English kebab-case. All output lands under `<repo-root>/.brag-doc/`.
 - Agents return compact JSON or count summaries, never file contents, to the main context.
 - Structured state lives in `.brag-doc/data/*.json` (source of truth); `.md` outputs are render
-  artifacts. Skills communicate through the JSON — never by parsing rendered markdown. The
-  `심층`/`항목` checkboxes in overview.md are derived from file existence at render time.
+  artifacts. Skills communicate through the JSON — never by parsing rendered markdown, with three
+  deliberate exceptions: the deep-dive documents (their prose and frontmatter *are* the source —
+  entry-writer reads `index.md` and the group docs), the one-time `rebuild-themes` migration, and
+  render-overview's `계정` carry-over from a pre-0.3.0 overview.md. The `심층`/`항목` checkboxes in
+  overview.md are derived from file existence at render time.

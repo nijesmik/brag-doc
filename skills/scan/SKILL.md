@@ -102,3 +102,8 @@ files, and derives the `심층`/`항목` checkbox columns from file existence.
 Summarize the generated file path, the theme count, and the deep-dive candidates (themes with
 signals), and mention that the user can continue with the `deep-dive` skill — naming it the way this
 platform invokes it (`/brag-doc:deep-dive` in Claude Code, `$deep-dive` in Codex).
+
+If this run went through "재수집" or "재클러스터", also note that the new themes carry new slugs, so
+any `deep-dive/<slug>/`, `entries/<slug>.md` and `data/entries/<slug>.json` from the old slugs are
+now orphaned — their `심층`/`항목` checkboxes simply stop appearing, and the folders stay on disk
+until the user deletes them.

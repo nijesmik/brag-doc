@@ -43,8 +43,8 @@ let you pick which themes to work on. When re-running `scan`, you can choose "�
 refresh document formats without recollecting or reclustering.
 
 Between steps 1 and 2, `/brag-doc:new-theme` (`$new-theme`) optionally picks items out of the
-overview's 미분류 (unclustered) list into a new theme row so deep-dive can analyze them — pass PR
-numbers / commit short hashes as arguments, or pick interactively.
+미분류 (unclustered) list into a new theme so deep-dive can analyze them — pass PR numbers /
+commit short hashes as arguments, or pick interactively.
 
 The generated documents are written in Korean.
 
@@ -65,7 +65,12 @@ Everything lands under `.brag-doc/` at the repo root.
 └── entries/<theme>.md       # Resume contribution-entry candidates (rendered)
 ```
 
-Structured state lives in `data/*.json`; the markdown files are rendered from it. After a plugin update, re-run `scan` and pick "문서만 재렌더" to refresh document formats without recollecting or reclustering — legacy runs without `data/` are migrated automatically from the existing overview.md.
+Structured state lives in `data/*.json`; the markdown files are rendered from it. After a plugin
+update, re-run `scan` and pick "문서만 재렌더" to refresh document formats without recollecting or
+reclustering. A legacy run without `data/` is migrated on that same opt-in path: the first skill
+you run rebuilds `data/themes.json` from the existing overview.md. That rebuild needs `raw/` to
+still be present, and it stops without writing anything if its consistency check fails — re-run
+`scan` with "재수집" in that case.
 
 ## Requirements
 

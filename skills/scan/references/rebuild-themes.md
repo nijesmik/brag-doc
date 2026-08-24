@@ -3,14 +3,33 @@
 Reconstructs `<repo-root>/.brag-doc/data/themes.json` from a legacy overview.md that predates the
 data/ directory. Followed by the **main context** of the `scan`, `new-theme`, and `deep-dive`
 skills when `data/themes.json` is missing but `overview.md` exists — this is not an agent
-instructions file. Requires `raw/prs.json`, `raw/commits.json`, `raw/meta.json`.
+instructions file. Requires `raw/prs.json`, `raw/commits.json`, `raw/meta.json`; the calling skill
+checks they exist before invoking this.
+
+**Inputs to resolve before starting**: `<repo-root>` (absolute), `<rawDir>` =
+`<repo-root>/.brag-doc/raw`, `<dataDir>` = `<repo-root>/.brag-doc/data`.
+
+The parsing below targets the 0.2.x overview.md layout, where all per-theme data lives in one
+merged theme table. A 0.1.x overview with per-theme sections will mis-parse; the ref-union check
+below is the net that catches it and stops.
 
 ## Parse the legacy overview.md
 
 Read `<repo-root>/.brag-doc/overview.md` and extract:
 
-- `stats`: from the header bullet lines — `prCount`/`directCommitCount`/`commitCount`/
-  `totalCommits` from the `규모` line, `period` from the `기간` line.
+- `stats`: **do not parse the header bullet lines** — `raw/meta.json` holds every field
+  authoritatively, so read it from there:
+
+  ```bash
+  jq '{prCount: (.myPrs | tonumber), commitCount: (.myCommits | tonumber),
+       directCommitCount: (.myDirectCommits | tonumber),
+       totalCommits: (.totalCommits | tonumber),
+       period: (if .firstDate[:7] == .lastDate[:7] then .firstDate[:7]
+                else "\(.firstDate[:7]) ~ \(.lastDate[:7])" end)}' <rawDir>/meta.json
+  ```
+
+  (`tonumber` accepts both, since the collector may have written the counts as numbers or as
+  strings. The `period` shape matches the clusterer's `YYYY-MM ~ YYYY-MM` contract.)
 - `themes[]`: one object per theme-table row —
   - `title` and `slug` from the `주제` cell (`<title> (`<slug>`)`)
   - `summary` from the `요약` cell (verbatim)
@@ -32,7 +51,7 @@ Read `<repo-root>/.brag-doc/overview.md` and extract:
   existence, never stored.
 
 Assemble `{"schemaVersion": 1, "stats": ..., "themes": [...], "unclustered": {...}}` and write it
-to `<repo-root>/.brag-doc/data/themes.json.tmp` (`mkdir -p` the data dir first).
+to `<dataDir>/themes.json.tmp` (`mkdir -p <dataDir>` first).
 
 ## Validate before adopting
 
@@ -52,12 +71,12 @@ fallback mode counts every commit.
 jq -n --slurpfile raw <rawDir>/commits.json --slurpfile t <dataDir>/themes.json.tmp '
   ($raw[0] | map(select(.firstParent and .pr == null and .parents < 2) | .hash) | sort) ==
   (($t[0] | [.themes[].commits[]] + .unclustered.commits) | sort)'
-# fallback mode: drop the select(...) filter
+# fallback mode: drop the select(...) filter — the map becomes map(.hash)
 ```
 
 - Both `true` → `mv themes.json.tmp themes.json` and continue.
-- Any `false` → `rm themes.json.tmp`, report which refs are missing/extra (compute the set
-  difference with the same jq expressions using `-` instead of `==`), and **stop** — do not
-  guess assignments.
+- Any `false` → `rm themes.json.tmp`, report which refs are missing/extra, and **stop** — do not
+  guess assignments. Compute both directions with the same jq expressions, replacing `==` with
+  `-`: `raw - themes` lists the refs the rebuild dropped, `themes - raw` the ones it invented.
 
 This runs once per legacy repo; afterwards `data/themes.json` is always the source of truth.
