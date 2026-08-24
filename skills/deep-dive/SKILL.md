@@ -1,11 +1,11 @@
 ---
 name: deep-dive
-description: Split themes from an existing brag-doc overview.md into feature/policy sub-groups and write PR-diff-based deep-dive documents under .brag-doc/deep-dive/<slug>/. Use when the user wants to dig into a scanned theme in depth; requires brag-doc scan to have run first.
+description: Split themes from brag-doc's data/themes.json into feature/policy sub-groups and write PR-diff-based deep-dive documents under .brag-doc/deep-dive/<slug>/. Use when the user wants to dig into a scanned theme in depth; requires brag-doc scan to have run first.
 ---
 
 ## Mission
 
-Pick themes from `<repo-root>/.brag-doc/overview.md` (a `.brag-doc/` folder at the repo root),
+Pick themes from `<repo-root>/.brag-doc/data/themes.json` (a `.brag-doc/` folder at the repo root),
 split each theme into feature/policy sub-groups, and produce a deep-dive folder per theme:
 `deep-dive/<slug>/index.md` plus one document per sub-group.
 
