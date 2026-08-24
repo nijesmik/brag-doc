@@ -11,8 +11,9 @@ Analyze the user's contributions in the current repo and generate `<repo-root>/.
 Resolve `<repo-root>` yourself with `git rev-parse --show-toplevel` and use the absolute path
 everywhere below.
 
-**Output language**: overview.md is written in Korean. The template below already carries the Korean
-headings and labels — keep them exactly as-is and fill in only the values.
+**Output language**: overview.md is written in Korean. The rendering procedure in
+[references/render-overview.md](references/render-overview.md) carries the Korean headings and
+labels — keep them exactly as-is and fill in only the values.
 
 ### Step 1: Identity confirmation (interactive)
 
