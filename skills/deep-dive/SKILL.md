@@ -12,18 +12,24 @@ split each theme into feature/policy sub-groups, and produce a deep-dive folder 
 Resolve `<repo-root>` yourself with `git rev-parse --show-toplevel` and use the absolute path
 everywhere below.
 
-### Step 1: Check the overview
+### Step 1: Check the data
 
-Read `<repo-root>/.brag-doc/overview.md`. **If it does not exist**, tell the user to run
-the `scan` skill first, and stop.
+Call `<repo-root>/.brag-doc/data` `<dataDir>` below. Read `<dataDir>/themes.json`:
+- **If it is missing but `<repo-root>/.brag-doc/overview.md` exists** (a legacy run), rebuild it
+  first by following
+  [../scan/references/rebuild-themes.md](../scan/references/rebuild-themes.md) (paths are relative
+  to this skill's directory). If the rebuild validation fails, stop as that procedure says.
+- **If neither exists**, tell the user to run the `scan` skill first, and stop.
 
 ### Step 2: Theme selection (interactive)
 
-Present the themes whose deep-dive column is `[ ]` in the theme table and let the user pick several
-(in Claude Code use AskUserQuestion with **multiSelect: true**; otherwise present a numbered list and
-ask for a comma-separated pick).
-Put each theme's deep-dive candidate signals and PR count in the option descriptions.
-If every theme is already `[x]`, say so and stop. (For re-analysis, the user can name a theme directly.)
+From `themes.json`'s `themes[]`, present the themes **without** an existing
+`<repo-root>/.brag-doc/deep-dive/<slug>/index.md` and let the user pick several (in Claude Code
+use AskUserQuestion with **multiSelect: true**; otherwise present a numbered list and ask for a
+comma-separated pick). Put each theme's `signals` and PR count in the option descriptions.
+If every theme already has an index.md, say so and stop. (For re-analysis, the user can name a
+theme directly — an already-analyzed theme is simply re-analyzed from scratch; there is no
+render-only mode for deep-dive documents.)
 
 If `raw/prs.json` is missing, the agents cannot read PR bodies — check before dispatching and,
 if missing, tell the user to run the `scan` skill (re-collect) first.
@@ -32,9 +38,8 @@ Also read `<repo-root>/.brag-doc/raw/meta.json`; if its `fallback` field is `tru
 could not collect PRs (`raw/prs.json` is `[]`, not missing) — tell the user that deep-dive is not
 supported in fallback mode (out of scope for now), and stop.
 
-For each selected theme, read its slug (backticked in the `주제` cell) and its PR numbers and
-commit hashes from the `관련 기여` cell of its row in the overview theme table.
-A theme may have only PRs, only commits, or both — pass whichever exist, using `[]` for the other.
+For each selected theme, take `slug`, `title`, `prs`, and `commits` straight from its object in
+`themes.json` — never parse them out of overview.md.
 
 ### Step 3: Dispatch theme-grouper agents in parallel
 
@@ -51,7 +56,7 @@ Each dispatch prompt must include:
 - `repoPath`: absolute path of the repo root
 - `rawDir`: `<repo-root>/.brag-doc/raw` (absolute path)
 - Theme info: `slug`, `title`, `prs` number array, `commits` short-hash array
-  (both extracted from the theme's `관련 기여` cell in the overview theme table; pass `[]` when a
+  (both taken from the theme's object in `themes.json`; pass `[]` when a
   theme has none)
 - `instructionsFile`: absolute path of `references/theme-grouper.md` inside this skill directory
 
@@ -126,8 +131,8 @@ deep-dive directory and re-run the missing groups' agents before rendering index
 ### Step 5: Render index.md yourself
 
 For each analyzed theme, render `<repo-root>/.brag-doc/deep-dive/<slug>/index.md` **yourself —
-do not delegate this to an agent** — from the theme's row in overview.md's theme table (title,
-slug, `요약`, `관련 기여`, `기간`, `규모`), the
+do not delegate this to an agent** — from the theme's object in `themes.json` (`title`,
+`slug`, `summary`, `prs`, `commits`, `period`, `size`), the
 group objects from Step 3 (slug, title, prs, commits, summary), and the analyzer summaries
 returned in Step 4 (oneLiner, keyDecisions, size).
 
@@ -171,12 +176,10 @@ and direct-commit short hash (`` `a1b2c3d` ``) belonging to that group: the grou
 from Step 3 first, then its `commits`, each in chronological order, separated by `, `. Omit
 whichever side is empty — a group can never have both empty.
 
-### Step 6: Update the overview
-
-After rendering, change the deep-dive column of each analyzed theme in the overview.md
-theme table to `[x](deep-dive/<slug>/index.md)`.
-
-### Step 7: Final report
+### Step 6: Final report
 
 Report the generated `deep-dive/<slug>/` folders (index.md + group files) and each group's
 `oneLiner` returned by the agents.
+
+Note to the user that overview.md's `심층` checkbox reflects folder existence and updates on the
+next render — running `scan` and choosing "문서만 재렌더" refreshes it immediately if wanted.
