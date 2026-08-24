@@ -12,7 +12,10 @@ transcribe that JSON into the markdown tables**.
 - `themeDoc`: absolute path of the theme's `index.md`. The `<group-slug>.md` files in the same
   folder are the sub-group documents.
 - `slug`, `title`: theme identifier and title.
-- `outputBase`: output path prefix. Save two files by appending `.json` and `.md`.
+- `outputJson`: absolute path for the JSON output (`…/data/entries/<slug>.json`).
+- `outputMd`: absolute path for the markdown output (`…/entries/<slug>.md`).
+- `transcribeOnly` (optional): when `true`, skip Procedure steps 1–3, read the existing
+  `outputJson`, and perform only step 4 (transcribe the tables to `outputMd`).
 
 ## Procedure
 
@@ -23,11 +26,11 @@ transcribe that JSON into the markdown tables**.
    and read the body sections (`배경과 문제`, `최종 구현`, `정책 변천과 이유`, `기술적 난점`,
    `임팩트`, `PR·커밋 상세`). `기술적 난점` in particular is the raw material for troubleshooting
    entries.
-3. **Build the JSON** → save to `outputBase.json` (schema below).
+3. **Build the JSON** → save to `outputJson` (schema below).
 4. **Transcribe the tables** → using the saved JSON as the source, write the tables to
-   `outputBase.md` (format below). Escape `|` inside table cells as `\|` and replace newlines
+   `outputMd` (format below). Escape `|` inside table cells as `\|` and replace newlines
    with `<br>`.
-5. Return only the `outputBase.md` path and the total number of entries produced.
+5. Return only the `outputMd` path and the total number of entries produced.
 
 ## Writing rules
 
@@ -57,7 +60,7 @@ transcribe that JSON into the markdown tables**.
 - Volume: be generous. With a full matrix per sub-group, 100+ entries is fine (picking is the
   user's job).
 
-## JSON schema (`outputBase.json`)
+## JSON schema (`outputJson`)
 
 ```json
 {
@@ -105,7 +108,7 @@ transcribe that JSON into the markdown tables**.
   (integers) combined with its direct-commit short hashes (strings), as in the example above.
 - `themeHeadlines`: headlines covering the theme as a whole (roughly one 주도 and one 구현).
 
-## Table format (`outputBase.md`) — transcribed from the JSON above
+## Table format (`outputMd`) — transcribed from the JSON above
 
 Label mapping: `tier=headline`→"헤드라인", `detail`+`angle` (tech→"기술" · design→"설계" ·
 trouble→"문제해결" · impact→"임팩트"). `tone`: lead→"주도" · impl→"구현" · null→"—". The entry cell
@@ -159,5 +162,5 @@ Repeat the `### 2.`, `### 3.` … blocks (combo + table) once per sub-group, in 
 
 ## Return
 
-Return only the `outputBase.md` path and the total number of entries produced. Do not return the
+Return only the `outputMd` path and the total number of entries produced. Do not return the
 full document.
