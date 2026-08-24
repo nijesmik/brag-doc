@@ -72,8 +72,8 @@ unique.
 
 ### Step 4: Edit themes.json and re-render
 
-Compute the new row's `기간` and `규모` from the raw files (substitute `pickedPrs`/`pickedCommits`
-into `$nums`/`$hashes`):
+Compute the new row's `기간` and `size` object from the raw files (substitute
+`pickedPrs`/`pickedCommits` into `$nums`/`$hashes`):
 
 ```bash
 jq -n -r --slurpfile prs <rawDir>/prs.json --slurpfile commits <rawDir>/commits.json \
@@ -84,15 +84,18 @@ jq -n -r --slurpfile prs <rawDir>/prs.json --slurpfile commits <rawDir>/commits.
 ```
 
 ```bash
-jq -n -r --slurpfile prs <rawDir>/prs.json --slurpfile commits <rawDir>/commits.json \
+jq -n --slurpfile prs <rawDir>/prs.json --slurpfile commits <rawDir>/commits.json \
   --argjson nums '[381]' --argjson hashes '["f7g8h9i"]' '
   ([ $prs[0][] | select(.number as $n | $nums | index($n)) ]
    + [ $commits[0][] | select(.hash as $h | $hashes | index($h)) ])
-  | "+\(map(.additions) | add)/-\(map(.deletions) | add)"'
+  | {additions: (map(.additions) | add // 0), deletions: (map(.deletions) | add // 0)}'
 ```
 
-**Fallback mode** (`fallback: true` in meta.json): skip the second command and use `—` for
-`규모`, matching the other fallback-mode rows.
+This second command produces the theme's `size` object (`additions`/`deletions` integers) for
+`themes.json` directly — it is not a 규모 display string.
+
+**Fallback mode** (`fallback: true` in meta.json): skip the second command — `render-overview.md`
+renders `—` for a theme with no `size` (see the fallback note below for `$theme` itself).
 
 Then update `<dataDir>/themes.json` — append the new theme and remove the picked refs from
 `unclustered` in one jq pass (substitute the computed values into `$theme`):
@@ -101,7 +104,7 @@ Then update `<dataDir>/themes.json` — append the new theme and remove the pick
 jq --argjson theme '{
   "slug": "<slug>", "title": "<title>", "summary": "미분류에서 선별한 항목",
   "prs": <pickedPrs>, "commits": <pickedCommits>,
-  "period": "<기간>", "size": {"additions": <n>, "deletions": <n>}, "signals": []
+  "period": "<기간>", "size": {"additions": <additions>, "deletions": <deletions>}, "signals": []
 }' '
   .themes += [$theme]
   | .unclustered.prs -= $theme.prs
