@@ -41,6 +41,10 @@ output.
 Step 1 opens with an interactive prompt confirming the git author names you have used. Steps 2 and 3
 let you pick which themes to work on.
 
+Between steps 1 and 2, `/brag-doc:new-theme` (`$new-theme`) optionally picks items out of the
+overview's 미분류 (unclustered) list into a new theme row so deep-dive can analyze them — pass PR
+numbers / commit short hashes as arguments, or pick interactively.
+
 The generated documents are written in Korean.
 
 ## Output
