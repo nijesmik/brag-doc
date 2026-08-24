@@ -7,6 +7,12 @@ Requires `<repo-root>/.brag-doc/data/themes.json` to exist (schemaVersion 1: the
 
 **Inputs to resolve before starting**: `<repo-root>` (absolute). Read
 `<repo-root>/.brag-doc/data/themes.json`, `raw/meta.json`, `raw/prs.json`, `raw/commits.json`.
+From `themes.json` take `stats`, `themes[]`, `unclustered`; from `raw/meta.json` take `repo`,
+`contributors`, `baseBranch`, `baseRef`, `collectedAt`, `fallback`, and the identity pair
+`gitAuthors` (array of author names) + `ghLogin` (login, or `none`) that fills the `계정` line.
+
+If `themes.json`'s `schemaVersion` is missing or is not `1`, stop and tell the user to re-run the
+`scan` skill — this procedure only renders schemaVersion 1.
 
 Fill the template below with `data/themes.json` + `raw/meta.json` + `raw/prs.json` and save it to
 `<repo-root>/.brag-doc/overview.md`. **Render it yourself — do not delegate this to an agent.**
@@ -57,6 +63,13 @@ Fill the 테마 column from the theme each PR/commit belongs to (`미분류` if 
 Check existence with a single `ls` per directory (`ls <repo-root>/.brag-doc/deep-dive/*/index.md`
 and `ls <repo-root>/.brag-doc/entries/*.md`, tolerating "no matches").
 
+The `계정` line comes from `raw/meta.json`: `<gitAuthors joined with ", ">, gh: <ghLogin>`.
+**Legacy-compat exception** — a pre-0.3.0 `meta.json` has neither field. Only then, carry the
+existing `계정` line over verbatim from `<repo-root>/.brag-doc/overview.md` if one exists, and
+render `—` if it does not. This is the one place this procedure reads a rendered document, and it
+is sanctioned for the same reason `rebuild-themes.md` is: recovering data an older layout stored
+only in markdown. It disappears once the user re-collects.
+
 Template (keep the Korean headings/labels as-is; fill in the values). All per-theme data lives in
 the theme table — do not add per-theme sections. Table rules:
 
@@ -68,12 +81,12 @@ the theme table — do not add per-theme sections. Table rules:
   in backticks. Omit whichever side is empty (and the ` · ` separator with it).
 - `신호` cell: the theme's signals comma-separated; `없음` if none.
 
-In `## 미분류`, omit whichever list is empty — PR-only or
-commit-only is fine — and if both `prs` and `commits` are empty, omit the entire `## 미분류` section:
-
 For each unclustered ref, take the title/subject from `raw/prs.json` / `raw/commits.json` and write
 the one-line Korean summary yourself from the title and body — summaries are regenerated on every
 render.
+
+In `## 미분류`, omit whichever list is empty — PR-only or
+commit-only is fine — and if both `prs` and `commits` are empty, omit the entire `## 미분류` section:
 
 ```markdown
 # <repo> 기여 분석
