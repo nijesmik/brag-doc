@@ -1,13 +1,14 @@
 ---
 name: new-theme
-description: Pick items out of the 미분류 (unclustered) section of an existing brag-doc overview.md and turn them into a new theme row that deep-dive can analyze. Use when the user wants to select unclustered items for further analysis; requires brag-doc scan to have run first. PR numbers or commit short hashes may be passed as arguments.
+description: Pick items out of the unclustered list in brag-doc's data/themes.json and turn them into a new theme that deep-dive can analyze. Use when the user wants to select unclustered items for further analysis; requires brag-doc scan to have run first. PR numbers or commit short hashes may be passed as arguments.
 ---
 
 ## Mission
 
-Move user-chosen items out of the `## 미분류` section and append them to the theme table as a new
-theme row, so the `deep-dive` skill can analyze them later. Edit `<repo-root>/.brag-doc/data/themes.json`
-yourself and re-render `overview.md` from it — no agents are dispatched.
+Move user-chosen items out of `data/themes.json`'s `unclustered` list and append them to
+`themes[]` as a new theme, so the `deep-dive` skill can analyze them later. Edit
+`<repo-root>/.brag-doc/data/themes.json` yourself and re-render `overview.md` from it — no agents
+are dispatched.
 
 Resolve `<repo-root>` yourself with `git rev-parse --show-toplevel` and use the absolute path
 everywhere below.
@@ -16,47 +17,57 @@ everywhere below.
 and/or commit short hashes (`f7g8h9i`). With refs, skip the interactive selection in Step 2; without
 refs, ask the user to pick.
 
-### Step 1: Check the overview
+### Step 1: Check the data
 
-Read `<repo-root>/.brag-doc/overview.md`. **If it does not exist**, tell the user to run the `scan`
-skill first, and stop.
+Call `<repo-root>/.brag-doc/raw` `<rawDir>` and `<repo-root>/.brag-doc/data` `<dataDir>` below.
 
-If it has no `## 미분류` section (or the section has no bullets), tell the user there is nothing to
-pick, and stop.
+`<rawDir>` is required on every path — Step 2 reads the picked refs' titles from it and Step 4
+computes the new theme's `기간`/`size` from it. If `<rawDir>/prs.json`, `<rawDir>/commits.json`, or
+`<rawDir>/meta.json` is missing, tell the user to run the `scan` skill (re-collect) first, and
+stop. Read `<rawDir>/meta.json` and note its `fallback` flag — Step 4's `규모` and the final report
+depend on it.
 
-Call `<repo-root>/.brag-doc/data` `<dataDir>` below. If `<dataDir>/themes.json` is missing,
-rebuild it from the legacy overview.md first by following
-[../scan/references/rebuild-themes.md](../scan/references/rebuild-themes.md) (paths are relative
-to this skill's directory). If the rebuild validation fails, stop as that procedure says.
+Then read `<dataDir>/themes.json`:
+- **If it is missing but `<repo-root>/.brag-doc/overview.md` exists** (a legacy run), rebuild it
+  first by following
+  [../scan/references/rebuild-themes.md](../scan/references/rebuild-themes.md) (paths are relative
+  to this skill's directory). Its `raw/` inputs are already checked above. If the rebuild
+  validation fails, stop as that procedure says.
+- **If neither exists**, tell the user to run the `scan` skill first, and stop.
 
-Call `<repo-root>/.brag-doc/raw` `<rawDir>` below. If `<rawDir>/prs.json` or
-`<rawDir>/commits.json` is missing, Step 4 cannot compute the new row — tell the user to run the
-`scan` skill (re-collect) first, and stop. Also read `<rawDir>/meta.json` and note its `fallback`
-flag — Step 4's `규모` and the final report depend on it.
+If `themes.json`'s `unclustered.prs` and `unclustered.commits` are both empty, tell the user there
+is nothing to pick, and stop.
 
 ### Step 2: Resolve the items (interactive when no arguments)
 
-Each `## 미분류` bullet starts with its ref: `- #<n> …` for a PR, `` - `<hash>` … `` for a commit.
+The pickable refs are exactly `<dataDir>/themes.json`'s `unclustered.prs` (PR numbers) and
+`unclustered.commits` (commit short hashes) — never a bullet in overview.md, which may be stale.
+List them with their titles from raw (`유형 \t 항목 \t 제목`, tab-separated):
+
+```bash
+jq -n -r --slurpfile t <dataDir>/themes.json \
+  --slurpfile prs <rawDir>/prs.json --slurpfile commits <rawDir>/commits.json '
+  ($t[0].unclustered) as $u
+  | ([ $prs[0][] | select(.number as $n | $u.prs | index($n))
+       | "PR\t#\(.number)\t\(.title)" ]
+     + [ $commits[0][] | select(.hash as $h | $u.commits | index($h))
+       | "커밋\t\(.hash)\t\(.subject)" ])
+  | .[]'
+```
 
 - **With arguments**: match each token against those refs. A `#`-prefixed token is always a PR
-  number. A bare all-digit token is matched as a PR number first; if no PR bullet matches, try it
-  as a commit hash. Any other token is a commit short hash and must equal a bullet's hash exactly.
-  If **any** token still matches no bullet (already in a theme, or a typo), list the offending
-  tokens and stop **without editing anything** — no partial application.
-- **Without arguments**: let the user multi-select from the bullets (in Claude Code use
-  AskUserQuestion with **multiSelect: true**, label = ref, description = title/summary; otherwise
-  present a numbered list and ask for a comma-separated pick). If the bullets outnumber
+  number. A bare all-digit token is matched against `unclustered.prs` first; if no PR matches, try
+  it against `unclustered.commits`. Any other token is a commit short hash and must equal an
+  `unclustered.commits` hash exactly. If **any** token still matches nothing (already in a theme,
+  or a typo), list the offending tokens and stop **without editing anything** — no partial
+  application.
+- **Without arguments**: let the user multi-select from the list above (in Claude Code use
+  AskUserQuestion with **multiSelect: true**, label = ref, description = title/subject; otherwise
+  present a numbered list and ask for a comma-separated pick). If the refs outnumber
   AskUserQuestion's option limit, use the numbered-list fallback there too.
 
-Picking every bullet is fine. Call the result `pickedPrs` (number array) and `pickedCommits`
+Picking every ref is fine. Call the result `pickedPrs` (number array) and `pickedCommits`
 (short-hash array) below; either may be empty, not both.
-
-**Guard against a stale overview.md**: verify every ref in `pickedPrs`/`pickedCommits` is actually
-present in `<dataDir>/themes.json`'s `unclustered.prs`/`unclustered.commits` (e.g.
-`jq --argjson nums "$pickedPrs" --argjson hashes "$pickedCommits" '($nums - .unclustered.prs) +
-($hashes - .unclustered.commits)' <dataDir>/themes.json` must print `[]`). If any ref is missing
-there, report the offending refs and stop **without editing anything** — the same
-no-partial-application rule as above.
 
 ### Step 3: Name the theme
 
@@ -95,7 +106,8 @@ This second command produces the theme's `size` object (`additions`/`deletions` 
 `themes.json` directly — it is not a 규모 display string.
 
 **Fallback mode** (`fallback: true` in meta.json): skip the second command — `render-overview.md`
-renders `—` for a theme with no `size` (see the fallback note below for `$theme` itself).
+keys its `규모` column off `meta.json`'s `fallback` flag and renders every theme's cell as `—`
+there (see the fallback note below for `$theme` itself).
 
 Then update `<dataDir>/themes.json` — append the new theme and remove the picked refs from
 `unclustered` in one jq pass (substitute the computed values into `$theme`):
