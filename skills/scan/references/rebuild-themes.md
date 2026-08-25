@@ -22,14 +22,20 @@ Read `<repo-root>/.brag-doc/overview.md` and extract:
 
   ```bash
   jq '{prCount: (.myPrs | tonumber), commitCount: (.myCommits | tonumber),
-       directCommitCount: (.myDirectCommits | tonumber),
+       directCommitCount: (if .fallback then (.myCommits | tonumber)
+                           else (.myDirectCommits | tonumber) end),
        totalCommits: (.totalCommits | tonumber),
        period: (if .firstDate[:7] == .lastDate[:7] then .firstDate[:7]
                 else "\(.firstDate[:7]) ~ \(.lastDate[:7])" end)}' <rawDir>/meta.json
   ```
 
   (`tonumber` accepts both, since the collector may have written the counts as numbers or as
-  strings. The `period` shape matches the clusterer's `YYYY-MM ~ YYYY-MM` contract.)
+  strings. The `period` shape matches the clusterer's `YYYY-MM ~ YYYY-MM` contract.
+  `directCommitCount` is mode-dependent, per the clusterer contract: it counts the hashes across
+  `themes[].commits` + `unclustered.commits`, which in **fallback mode** is *every* commit — the
+  same population the fallback validation below enforces — so it reads `myCommits` there, not the
+  filtered `myDirectCommits`. Getting this wrong renders `직접 커밋` smaller than `커밋 총`, which
+  the render explicitly says cannot happen in fallback mode.)
 - `themes[]`: one object per theme-table row —
   - `title` and `slug` from the `주제` cell (`<title> (`<slug>`)`)
   - `summary` from the `요약` cell (verbatim)

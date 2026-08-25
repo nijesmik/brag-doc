@@ -48,13 +48,13 @@ AskUserQuestion; otherwise a numbered list):
 - "재수집" (recommended default — picks up new PRs/commits) → proceed from Step 3
 - "재클러스터 (기존 raw 재사용)" → skip Step 3 and start from Step 4
 - "문서만 재렌더" — only offer this option when `data/themes.json` **or** a legacy `overview.md`
-  exists. Zero agent dispatches: if `data/themes.json` is missing, first rebuild it from the
-  legacy overview.md by following
-  [references/rebuild-themes.md](references/rebuild-themes.md) — that rebuild also needs
-  `raw/commits.json` and `raw/meta.json`, so check both exist before starting it and, if either is
-  missing, tell the user to re-run `scan` with "재수집" and stop. Then jump straight to Step 5
-  (render) and Step 6. Content stays identical; only the document format is refreshed — this is
-  the choice to use after a plugin update.
+  exists. Zero agent dispatches. The render itself reads `raw/commits.json` and `raw/meta.json` on
+  top of the `raw/prs.json` this step already checked, so confirm both exist **before** doing
+  anything else on this branch and, if either is missing, tell the user to re-run `scan` with
+  "재수집" and stop. Then, if `data/themes.json` is missing, rebuild it from the legacy overview.md
+  by following [references/rebuild-themes.md](references/rebuild-themes.md). Finally jump straight
+  to Step 5 (render) and Step 6. Content stays identical; only the document format is refreshed —
+  this is the choice to use after a plugin update.
 
 (The quoted strings are the option labels shown to the user — keep them in Korean.)
 
