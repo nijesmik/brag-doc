@@ -9,9 +9,10 @@ checks they exist before invoking this.
 **Inputs to resolve before starting**: `<repo-root>` (absolute), `<rawDir>` =
 `<repo-root>/.brag-doc/raw`, `<dataDir>` = `<repo-root>/.brag-doc/data`.
 
-The parsing below targets the 0.2.x overview.md layout, where all per-theme data lives in one
-merged theme table. A 0.1.x overview with per-theme sections will mis-parse; the ref-union check
-below is the net that catches it and stops.
+Two overview.md layouts exist in the wild and the parsing below handles both, detected by the
+theme table's header row: the **section-based** layout every release through 0.2.0 wrote, and the
+**merged-table** layout only unreleased builds wrote. An unrecognized header stops the migration,
+and the ref-union check below is the net for anything that parses but parses wrong.
 
 ## Parse the legacy overview.md
 
@@ -36,12 +37,38 @@ Read `<repo-root>/.brag-doc/overview.md` and extract:
   same population the fallback validation below enforces — so it reads `myCommits` there, not the
   filtered `myDirectCommits`. Getting this wrong renders `직접 커밋` smaller than `커밋 총`, which
   the render explicitly says cannot happen in fallback mode.)
-- `themes[]`: one object per theme-table row —
+- `themes[]`: one object per theme. **Two layouts exist — detect which by the theme table's header
+  row under `## 주제별 기여`, then follow the matching branch below.** Every field lands in the
+  same place either way; only where you read it from differs.
+
+  **Layout A — section-based** (header `| # | 주제 | 기여 | 기간 | 규모 | 심층 |`). This is what
+  every released version through 0.2.0 wrote, so it is the layout a real legacy run almost always
+  has. The table carries only counts; the per-theme `### <n>. <title>` sections carry the rest:
+  - `title` from the section heading (`### <n>. <title>`), matching the row's `주제` cell
+  - `slug` from the section's `- slug: <slug>` line
+  - `summary` from the paragraph between the section heading and the `- slug:` line, collapsed to
+    a single line (the render writes it into a table cell)
+  - `prs` from the section's `- 관련 PR:` line (`#367, #380, …` → integers); the line is **absent**
+    when the theme has none → `[]`
+  - `commits` from the section's `- 관련 커밋:` line (bare short hashes, comma-separated);
+    absent → `[]`
+  - `signals` from the section's `- 심층 분석 후보 신호:` line, comma-split; `없음` → `[]`
+  - `period` from the row's `기간` cell
+
+  **Layout B — merged table** (header `| # | 주제 | 요약 | 관련 기여 | 기간 | 규모 | 신호 | 심층 |`).
+  Written only by unreleased builds between the merge of the per-theme sections and 0.3.0, so you
+  will meet it mainly on a developer's checkout. There are no per-theme sections; read everything
+  from the row:
   - `title` and `slug` from the `주제` cell (`<title> (`<slug>`)`)
   - `summary` from the `요약` cell (verbatim)
   - `prs` (integers) and `commits` (short hashes) from every ref in the `관련 기여` cell
   - `period` from the `기간` cell
   - `signals` from the `신호` cell, comma-split; `없음` → `[]`
+
+  If the header matches neither, stop and tell the user the overview.md layout is unrecognized and
+  they should re-run `scan` with "재수집".
+
+  **Both layouts**, for every theme:
   - `size`: **do not parse the `규모` cell** (it may be abbreviated). Recompute exactly from raw
     (skip in fallback mode — omit the key, matching the clusterer contract):
 
