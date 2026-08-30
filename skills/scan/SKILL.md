@@ -11,8 +11,9 @@ Analyze the user's contributions in the current repo and generate `<repo-root>/.
 Resolve `<repo-root>` yourself with `git rev-parse --show-toplevel` and use the absolute path
 everywhere below.
 
-**Output language**: overview.md is written in Korean. The template below already carries the Korean
-headings and labels — keep them exactly as-is and fill in only the values.
+**Output language**: overview.md is written in Korean. The rendering procedure in
+[references/render-overview.md](references/render-overview.md) carries the Korean headings and
+labels — keep them exactly as-is and fill in only the values.
 
 ### Step 1: Identity confirmation (interactive)
 
@@ -40,11 +41,37 @@ otherwise present a numbered list and ask for a comma-separated pick):
   **multi-select the author names they have used** (one person commonly uses several names).
 - If the gh login is `none`, tell the user the run will proceed with commits only, without PR collection.
 
+Finally, if `<repo-root>/.brag-doc/raw/meta.json` already exists but lacks `gitAuthors`/`ghLogin`
+(a pre-0.3.0 collection), backfill both from this step's confirmation so the render's `계정` line
+works on the "재클러스터" and "문서만 재렌더" paths without the legacy carry-over:
+
+```bash
+jq --argjson authors '<confirmed author names as a JSON array>' --arg login '<ghLogin>' \
+  '. + {gitAuthors: $authors, ghLogin: $login}' \
+  <repo-root>/.brag-doc/raw/meta.json > <repo-root>/.brag-doc/raw/meta.json.tmp \
+  && mv <repo-root>/.brag-doc/raw/meta.json.tmp <repo-root>/.brag-doc/raw/meta.json
+```
+
 ### Step 2: Re-run check
 
-If `<repo-root>/.brag-doc/raw/prs.json` already exists, ask the user to choose:
-- "재수집" (recommended default — picks up new PRs/commits) → proceed from Step 3
-- "기존 raw 재사용" (re-cluster only) → skip Step 3 and start from Step 4
+If `<repo-root>/.brag-doc/raw/prs.json` **or** `<repo-root>/.brag-doc/data/themes.json` exists,
+ask the user to choose (in Claude Code use AskUserQuestion; otherwise a numbered list). Offer only
+the options whose inputs exist — never fall through to a re-collect without showing this menu:
+- "재수집" (recommended default — picks up new PRs/commits) → proceed from Step 3. **When
+  `data/themes.json`, `deep-dive/`, or `entries/` exists, say in the option description that
+  re-collecting re-clusters from scratch with new slugs — existing deep-dive/entries folders are
+  orphaned and hand-made `new-theme` themes are dropped** — so the user chooses it knowingly.
+- "재클러스터 (기존 raw 재사용)" — requires `raw/prs.json`; carries the same re-cluster warning →
+  skip Step 3 and start from Step 4
+- "문서만 재렌더" — only offer this option when `data/themes.json` **or** a legacy `overview.md`
+  exists, **and** the render's inputs are all present: `raw/prs.json`, `raw/commits.json`,
+  `raw/meta.json`. If any raw file is missing, say the option needs a re-collect first (a pruned
+  `raw/` cannot re-render) instead of offering it. Zero agent dispatches. If `data/themes.json` is
+  missing, rebuild it from the legacy overview.md by following
+  [references/rebuild-themes.md](references/rebuild-themes.md). Finally jump straight to Step 5
+  (render) and Step 6. The themes, refs, and stats stay identical; the render re-derives the
+  checkbox columns and rewrites the 미분류 one-line summaries (those are regenerated on every
+  render) — this is the choice to use after a plugin update.
 
 (The quoted strings are the option labels shown to the user — keep them in Korean.)
 
@@ -77,112 +104,25 @@ The dispatch prompt must include the absolute `rawDir` path and `instructionsFil
 Parse the returned JSON. If parsing fails, do not re-dispatch the agent — extract the JSON portion
 from the returned text directly.
 
+Then persist it: run `mkdir -p <repo-root>/.brag-doc/data` and save the parsed clusterer JSON to
+`<repo-root>/.brag-doc/data/themes.json`, adding `"schemaVersion": 1` as the first top-level key.
+This file — not the in-memory return — is the source of truth every later step and skill reads;
+overview.md is a rendered artifact derived from it.
+
 ### Step 5: Render overview.md
 
-Fill the template below with the theme JSON + `raw/meta.json` + `raw/prs.json` and save it to
-`<repo-root>/.brag-doc/overview.md`. **Render it yourself — do not delegate this to an agent.**
-
-Extract the chronological data with (merges PRs and direct commits into one timeline, emitting the
-month key and day together). Use the **normal-mode** command when `raw/meta.json`'s `fallback` is
-`false`/absent; use the **fallback-mode** command when it is `true` — do not use the normal-mode
-command in fallback mode, its `select` silently drops commits (a `(#N)` squash-merge subject, a
-merge commit with `parents >= 2`, a commit off the first-parent line) that the clusterer still
-counted into the theme table's `관련 기여` column, `미분류`, and `directCommitCount`.
-
-Normal mode (`firstParent && pr == null && parents < 2`, i.e. direct commits only):
-
-```bash
-jq -n -r --slurpfile prs <repo-root>/.brag-doc/raw/prs.json --slurpfile commits <repo-root>/.brag-doc/raw/commits.json '
-  ([ $prs[0][] | {date: .mergedAt[:10], kind: "PR", ref: "#\(.number)", title: .title} ]
-   + [ $commits[0][] | select(.firstParent and .pr == null and .parents < 2)
-       | {date: .date[:10], kind: "커밋", ref: .hash, title: .subject} ])
-  | sort_by(.date) | .[]
-  | "\(.date[:7])\t\(.date[5:])\t\(.kind)\t\(.ref)\t\(.title)"'
-```
-
-Fallback mode (no `select` — every commit is included, matching the clusterer's fallback behavior;
-`prs.json` is `[]` so the PR half contributes nothing):
-
-```bash
-jq -n -r --slurpfile prs <repo-root>/.brag-doc/raw/prs.json --slurpfile commits <repo-root>/.brag-doc/raw/commits.json '
-  ([ $prs[0][] | {date: .mergedAt[:10], kind: "PR", ref: "#\(.number)", title: .title} ]
-   + [ $commits[0][] | {date: .date[:10], kind: "커밋", ref: .hash, title: .subject} ])
-  | sort_by(.date) | .[]
-  | "\(.date[:7])\t\(.date[5:])\t\(.kind)\t\(.ref)\t\(.title)"'
-```
-
-The output is 5 tab-separated columns: `월키 \t MM-DD \t 유형 \t 항목 \t 제목`. Split the monthly tables
-on the first column, and put the second column in the date column.
-
-Fill the 테마 column from the theme each PR/commit belongs to (`미분류` if unclustered).
-
-**If overview.md already exists**: before overwriting, collect the slugs whose deep-dive column is
-checked — `[x](deep-dive/<slug>/index.md)` — in the existing theme table, and preserve the `[x]`
-link **verbatim** for any matching slug in the new table.
-Symmetrically, if the existing theme table has an `항목` column (added by
-the `entries` skill), keep that column in the re-rendered table and preserve each
-matching slug's `[x](entries/<slug>.md)` value verbatim; non-matching or new rows get
-`[ ]`. If the existing overview has no `항목` column, do not add one.
-
-Template (keep the Korean headings/labels as-is; fill in the values). All per-theme data lives in
-the theme table — do not add per-theme sections. Table rules:
-
-- `주제` cell: the theme title followed by its slug in backticks, in parentheses — deep-dive uses
-  the slug as the `deep-dive/` folder name.
-- `요약` cell: the theme's `summary`, on a single line.
-- `관련 기여` cell: the counts with every ref in parentheses —
-  ``PR <prs count>개 (#367, #380, ...) · 커밋 <commits count>개 (`a1b2c3d`, ...)``, commit hashes
-  in backticks. Omit whichever side is empty (and the ` · ` separator with it).
-- `신호` cell: the theme's signals comma-separated; `없음` if none.
-
-In `## 미분류`, omit whichever list is empty — PR-only or
-commit-only is fine — and if both `prs` and `commits` are empty, omit the entire `## 미분류` section:
-
-```markdown
-# <repo> 기여 분석
-
-- **레포**: <owner/repo> (<contributors>인 기여)
-- **기간**: <stats.period>
-- **규모**: PR <prCount>개, 직접 커밋 <directCommitCount>개, 커밋 총 <commitCount>개 (전체 <totalCommits>개의 ~N%)
-- **계정**: <gitAuthors>, gh: <ghLogin>
-- **기준 브랜치**: <meta.baseBranch> (<meta.baseRef>)
-- **수집일**: <meta.collectedAt date only>
-
-## 주제별 기여
-
-| # | 주제 | 요약 | 관련 기여 | 기간 | 규모 | 신호 | 심층 |
-|---|------|------|-----------|------|------|------|------|
-| 1 | <title> (`<slug>`) | <summary> | PR 2개 (#367, #380) · 커밋 2개 (`a1b2c3d`, `e4f5g6h`) | <period> | +<additions>/-<deletions> | <signals> | [ ] |
-
-## 미분류
-
-- #381 <title> (one-line summary in Korean)
-- `f7g8h9i` <subject> (one-line summary in Korean)
-
-## 시간순 활동
-
-### 2026-05
-
-| 날짜 | 유형 | 항목 | 제목 | 테마 |
-|------|------|------|------|------|
-| 05-11 | PR | #384 | 블랙박스 0-byte PUT 회귀 수정 | 블랙박스 사진 업로드 파이프라인 |
-| 05-11 | 커밋 | `a1b2c3d` | HEIC 변환 타임아웃 30초로 상향 | 블랙박스 사진 업로드 파이프라인 |
-| 05-12 | PR | #387 | 모달/바텀시트 하드백 처리 | 웹뷰 내비게이션/뒤로가기 정책 |
-```
-
-**Fallback-mode rendering** (when `fallback` in `meta.json` is `true`): use the same template with
-only these differences:
-
-- In the theme table, the `관련 기여` column holds only `커밋 <n>개 (…)` and the `규모` column is `—`.
-- Build `## 시간순 활동` with the **fallback mode** extraction command above — it must include every
-  commit (no `select`) so that the theme table's `관련 기여` column, `미분류`, `directCommitCount`,
-  and the chronological activity stay consistent with each other.
-- On the 규모 line, `직접 커밋 <n>개` ends up equal to `커밋 총 <n>개`, because without PR records
-  every commit counts as a direct commit. Even if that looks misleading, do not hide the number or
-  recompute it — expose exactly what the clusterer returned.
+Render `<repo-root>/.brag-doc/overview.md` by following
+[references/render-overview.md](references/render-overview.md) exactly — **render it yourself; do
+not delegate this to an agent.** It reads `data/themes.json` (saved in Step 4) plus the `raw/`
+files, and derives the `심층`/`항목` checkbox columns from file existence.
 
 ### Step 6: Final report
 
 Summarize the generated file path, the theme count, and the deep-dive candidates (themes with
 signals), and mention that the user can continue with the `deep-dive` skill — naming it the way this
 platform invokes it (`/brag-doc:deep-dive` in Claude Code, `$deep-dive` in Codex).
+
+If this run went through "재수집" or "재클러스터", also note that the new themes carry new slugs, so
+any `deep-dive/<slug>/`, `entries/<slug>.md` and `data/entries/<slug>.json` from the old slugs are
+now orphaned — their `심층`/`항목` checkboxes simply stop appearing, and the folders stay on disk
+until the user deletes them.

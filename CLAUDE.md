@@ -7,7 +7,9 @@ Claude Code and Codex**.
 
 - **Skills are the only entry points**: `skills/<name>/SKILL.md` (Claude `/brag-doc:<name>`,
   Codex `$<name>`). No `commands/` directory.
-- **Agent instructions live once**, in `skills/*/references/<agent>.md`. `agents/*.md` are thin
+- **Agent instructions live once**, in `skills/*/references/<agent>.md`. (`references/` also holds
+  shared **main-context** procedures — e.g. `render-overview.md`, `rebuild-themes.md` — that belong
+  to no agent and need no stub; their headers say so.) `agents/*.md` are thin
   Claude-only stubs that just read the `instructionsFile` given in their dispatch prompt — never
   put real instructions in them, only config frontmatter: a `tools:` allowlist covering
   everything the reference file does (a new capability in a reference file may need a `tools:`
@@ -30,3 +32,9 @@ Claude Code and Codex**.
   `raw/digests/`) and skill/reference prose are in English.
 - `slug` values: English kebab-case. All output lands under `<repo-root>/.brag-doc/`.
 - Agents return compact JSON or count summaries, never file contents, to the main context.
+- Structured state lives in `.brag-doc/data/*.json` (source of truth); `.md` outputs are render
+  artifacts. Skills communicate through the JSON — never by parsing rendered markdown, except the
+  deep-dive documents (their prose and frontmatter *are* the source), the one-time
+  `rebuild-themes` migration, and render-overview's `계정` carry-over from a pre-0.3.0
+  overview.md. The `심층`/`항목` checkboxes in overview.md are derived from file existence at
+  render time.

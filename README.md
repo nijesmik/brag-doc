@@ -39,11 +39,12 @@ output.
 | 3 | `/brag-doc:entries` | `$entries` | Extracts resume contribution-entry candidates from the deep dives |
 
 Step 1 opens with an interactive prompt confirming the git author names you have used. Steps 2 and 3
-let you pick which themes to work on.
+let you pick which themes to work on. When re-running `scan`, you can choose "문서만 재렌더" to
+refresh document formats without recollecting or reclustering.
 
 Between steps 1 and 2, `/brag-doc:new-theme` (`$new-theme`) optionally picks items out of the
-overview's 미분류 (unclustered) list into a new theme row so deep-dive can analyze them — pass PR
-numbers / commit short hashes as arguments, or pick interactively.
+미분류 (unclustered) list into a new theme so deep-dive can analyze them — pass PR numbers /
+commit short hashes as arguments, or pick interactively.
 
 The generated documents are written in Korean.
 
@@ -53,13 +54,25 @@ Everything lands under `.brag-doc/` at the repo root.
 
 ```
 .brag-doc/
-├── overview.md              # Contributions by theme + chronological activity
+├── overview.md              # Contributions by theme + chronological activity (rendered)
 ├── raw/                     # Collected source data (prs.json, commits.json, meta.json) and digests/
+├── data/                    # Machine-facing state (source of truth)
+│   ├── themes.json          # Theme clustering result; markdown docs are re-renderable from it
+│   └── entries/<theme>.json # Entry candidates as structured data
 ├── deep-dive/<theme>/
 │   ├── index.md             # Theme overview and sub-group table
 │   └── <group>.md           # Per-group deep dive
-└── entries/<theme>.md       # Resume contribution-entry candidates
+└── entries/<theme>.md       # Resume contribution-entry candidates (rendered)
 ```
+
+Structured state lives in `data/*.json`; the markdown files are rendered from it. After a plugin
+update, re-run `scan` and pick "문서만 재렌더" to refresh document formats without recollecting or
+reclustering. A legacy run without `data/` is migrated automatically the first time `deep-dive`,
+`entries`, or `new-theme` runs — or when you pick `scan`'s "문서만 재렌더" — by rebuilding
+`data/themes.json` from the existing overview.md. The rebuild needs `raw/` to still be present,
+and it stops without writing anything if its consistency check fails. `scan`'s "재수집" and
+"재클러스터" do **not** migrate: they rebuild the themes from scratch with new slugs, which
+orphans existing `deep-dive/` and `entries/` folders — `scan` warns before you pick them.
 
 ## Requirements
 

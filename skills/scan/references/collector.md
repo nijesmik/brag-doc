@@ -134,6 +134,8 @@ Save in this shape (fill values from the actual commands):
 ```json
 {
   "repo": "<result of gh repo view --json nameWithOwner; directory name in fallback mode>",
+  "gitAuthors": ["<each name from the gitAuthors input, verbatim — a real JSON array, never a string>"],
+  "ghLogin": "<the ghLogin input; the string \"none\" when gh is unavailable>",
   "baseBranch": "<baseBranch input>",
   "baseRef": "<resolved baseRef: origin/main | main | HEAD>",
   "totalCommits": "<git rev-list --count <baseRef>>",
@@ -147,6 +149,10 @@ Save in this shape (fill values from the actual commands):
   "collectedAt": "<date -Iseconds>"
 }
 ```
+
+`gitAuthors` and `ghLogin` are the dispatch inputs written back out unchanged — they are the only
+record of the confirmed identity, and every later render reads the `계정` line from them instead of
+re-confirming it.
 
 ### 4. Return
 
