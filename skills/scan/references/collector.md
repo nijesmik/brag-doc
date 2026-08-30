@@ -134,7 +134,7 @@ Save in this shape (fill values from the actual commands):
 ```json
 {
   "repo": "<result of gh repo view --json nameWithOwner; directory name in fallback mode>",
-  "gitAuthors": "<the gitAuthors input, verbatim, as a JSON array of strings>",
+  "gitAuthors": ["<each name from the gitAuthors input, verbatim — a real JSON array, never a string>"],
   "ghLogin": "<the ghLogin input; the string \"none\" when gh is unavailable>",
   "baseBranch": "<baseBranch input>",
   "baseRef": "<resolved baseRef: origin/main | main | HEAD>",

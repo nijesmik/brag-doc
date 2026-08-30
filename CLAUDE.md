@@ -7,7 +7,9 @@ Claude Code and Codex**.
 
 - **Skills are the only entry points**: `skills/<name>/SKILL.md` (Claude `/brag-doc:<name>`,
   Codex `$<name>`). No `commands/` directory.
-- **Agent instructions live once**, in `skills/*/references/<agent>.md`. `agents/*.md` are thin
+- **Agent instructions live once**, in `skills/*/references/<agent>.md`. (`references/` also holds
+  shared **main-context** procedures — e.g. `render-overview.md`, `rebuild-themes.md` — that belong
+  to no agent and need no stub; their headers say so.) `agents/*.md` are thin
   Claude-only stubs that just read the `instructionsFile` given in their dispatch prompt — never
   put real instructions in them, only config frontmatter: a `tools:` allowlist covering
   everything the reference file does (a new capability in a reference file may need a `tools:`

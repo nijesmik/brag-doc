@@ -41,20 +41,37 @@ otherwise present a numbered list and ask for a comma-separated pick):
   **multi-select the author names they have used** (one person commonly uses several names).
 - If the gh login is `none`, tell the user the run will proceed with commits only, without PR collection.
 
+Finally, if `<repo-root>/.brag-doc/raw/meta.json` already exists but lacks `gitAuthors`/`ghLogin`
+(a pre-0.3.0 collection), backfill both from this step's confirmation so the render's `계정` line
+works on the "재클러스터" and "문서만 재렌더" paths without the legacy carry-over:
+
+```bash
+jq --argjson authors '<confirmed author names as a JSON array>' --arg login '<ghLogin>' \
+  '. + {gitAuthors: $authors, ghLogin: $login}' \
+  <repo-root>/.brag-doc/raw/meta.json > <repo-root>/.brag-doc/raw/meta.json.tmp \
+  && mv <repo-root>/.brag-doc/raw/meta.json.tmp <repo-root>/.brag-doc/raw/meta.json
+```
+
 ### Step 2: Re-run check
 
-If `<repo-root>/.brag-doc/raw/prs.json` already exists, ask the user to choose (in Claude Code use
-AskUserQuestion; otherwise a numbered list):
-- "재수집" (recommended default — picks up new PRs/commits) → proceed from Step 3
-- "재클러스터 (기존 raw 재사용)" → skip Step 3 and start from Step 4
+If `<repo-root>/.brag-doc/raw/prs.json` **or** `<repo-root>/.brag-doc/data/themes.json` exists,
+ask the user to choose (in Claude Code use AskUserQuestion; otherwise a numbered list). Offer only
+the options whose inputs exist — never fall through to a re-collect without showing this menu:
+- "재수집" (recommended default — picks up new PRs/commits) → proceed from Step 3. **When
+  `data/themes.json`, `deep-dive/`, or `entries/` exists, say in the option description that
+  re-collecting re-clusters from scratch with new slugs — existing deep-dive/entries folders are
+  orphaned and hand-made `new-theme` themes are dropped** — so the user chooses it knowingly.
+- "재클러스터 (기존 raw 재사용)" — requires `raw/prs.json`; carries the same re-cluster warning →
+  skip Step 3 and start from Step 4
 - "문서만 재렌더" — only offer this option when `data/themes.json` **or** a legacy `overview.md`
-  exists. Zero agent dispatches. The render itself reads `raw/commits.json` and `raw/meta.json` on
-  top of the `raw/prs.json` this step already checked, so confirm both exist **before** doing
-  anything else on this branch and, if either is missing, tell the user to re-run `scan` with
-  "재수집" and stop. Then, if `data/themes.json` is missing, rebuild it from the legacy overview.md
-  by following [references/rebuild-themes.md](references/rebuild-themes.md). Finally jump straight
-  to Step 5 (render) and Step 6. Content stays identical; only the document format is refreshed —
-  this is the choice to use after a plugin update.
+  exists, **and** the render's inputs are all present: `raw/prs.json`, `raw/commits.json`,
+  `raw/meta.json`. If any raw file is missing, say the option needs a re-collect first (a pruned
+  `raw/` cannot re-render) instead of offering it. Zero agent dispatches. If `data/themes.json` is
+  missing, rebuild it from the legacy overview.md by following
+  [references/rebuild-themes.md](references/rebuild-themes.md). Finally jump straight to Step 5
+  (render) and Step 6. The themes, refs, and stats stay identical; the render re-derives the
+  checkbox columns and rewrites the 미분류 one-line summaries (those are regenerated on every
+  render) — this is the choice to use after a plugin update.
 
 (The quoted strings are the option labels shown to the user — keep them in Korean.)
 

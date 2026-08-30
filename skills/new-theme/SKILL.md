@@ -35,6 +35,11 @@ Then read `<dataDir>/themes.json`:
   validation fails, stop as that procedure says.
 - **If neither exists**, tell the user to run the `scan` skill first, and stop.
 
+If `themes.json`'s `schemaVersion` is missing or is not `1`, stop **before editing anything** and
+tell the user to re-run `scan` with "재수집" or "재클러스터" — Step 4 mutates this file, and the
+render refuses any other schemaVersion, so editing first would leave a change the user can only
+recover from by rebuilding (losing this run's theme).
+
 If `themes.json`'s `unclustered.prs` and `unclustered.commits` are both empty, tell the user there
 is nothing to pick, and stop.
 
@@ -57,7 +62,9 @@ jq -n -r --slurpfile t <dataDir>/themes.json \
 
 - **With arguments**: match each token against those refs. A `#`-prefixed token is always a PR
   number. A bare all-digit token is matched against `unclustered.prs` first; if no PR matches, try
-  it against `unclustered.commits`. Any other token is a commit short hash and must equal an
+  it against `unclustered.commits` — and if it matches **both** a PR number and a commit hash, ask
+  the user which one they meant instead of silently taking the PR. Any other token is a commit
+  short hash and must equal an
   `unclustered.commits` hash exactly. If **any** token still matches nothing (already in a theme,
   or a typo), list the offending tokens and stop **without editing anything** — no partial
   application.
@@ -126,6 +133,11 @@ jq --argjson theme '{
 
 In fallback mode omit the `size` key from `$theme` entirely (matching the clusterer contract).
 
+The `$theme` object sits inside a single-quoted shell argument, and the title is user-typed — if
+the title (or any substituted value) contains `'` or `"`, do not inline it: write the JSON object
+to `<dataDir>/theme.tmp.json`, pass it with `--argjson theme "$(cat <dataDir>/theme.tmp.json)"`,
+and delete the temp file afterwards.
+
 Then re-render `overview.md` by following
 [../scan/references/render-overview.md](../scan/references/render-overview.md) — the new theme
 row, the shrunken `## 미분류` section, and the re-themed `## 시간순 활동` cells all come out of
@@ -133,7 +145,8 @@ the render; do not hand-edit overview.md.
 
 ### Step 5: Final report
 
-Report the new row — title, slug, refs, `기간`/`규모` — and how many 미분류 items remain. Tell the
+Report the new row — title, slug, refs, `기간`/`규모` (`규모` is `—` in fallback mode, where the
+theme has no `size`) — and how many 미분류 items remain. Tell the
 user the theme can now be analyzed with the `deep-dive` skill — naming it the way this platform
 invokes it (`/brag-doc:deep-dive` in Claude Code, `$deep-dive` in Codex). In fallback mode, note
 instead that deep-dive does not support fallback-mode data, so the row documents the grouping only.

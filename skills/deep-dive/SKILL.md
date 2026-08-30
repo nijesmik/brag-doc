@@ -20,6 +20,10 @@ Call `<repo-root>/.brag-doc/raw` `<rawDir>` and `<repo-root>/.brag-doc/data` `<d
 `<rawDir>/prs.json`, `<rawDir>/commits.json`, or `<rawDir>/meta.json` is missing, tell the user to
 run the `scan` skill (re-collect) first, and stop.
 
+Read `<rawDir>/meta.json` now; if its `fallback` field is `true`, the collector could not collect
+PRs (`raw/prs.json` is `[]`, not missing) — tell the user that deep-dive is not supported in
+fallback mode (out of scope for now), and stop **before** any migration or theme selection.
+
 Then read `<dataDir>/themes.json`:
 - **If it is missing but `<repo-root>/.brag-doc/overview.md` exists** (a legacy run), rebuild it
   first by following
@@ -37,10 +41,6 @@ comma-separated pick). Put each theme's `signals` and PR count in the option des
 If every theme already has an index.md, say so and stop. (For re-analysis, the user can name a
 theme directly — an already-analyzed theme is simply re-analyzed from scratch; there is no
 render-only mode for deep-dive documents.)
-
-Read `<rawDir>/meta.json`; if its `fallback` field is `true`, the collector could not collect PRs
-(`raw/prs.json` is `[]`, not missing) — tell the user that deep-dive is not supported in fallback
-mode (out of scope for now), and stop.
 
 For each selected theme, take `slug`, `title`, `prs`, and `commits` straight from its object in
 `themes.json` — never parse them out of overview.md.
@@ -174,8 +174,10 @@ direct-commit short hashes, **both exhaustive**; when the theme has none of that
 empty array `[]` rather than dropping the key. Every other value — `theme`, each commit hash,
 `period`, `size` — must be double-quoted, so that a title containing `:` or a hash that looks
 numeric (`1234567`, `1e23456`) cannot break the YAML. The `size` value is the abbreviated display
-string rendered from the theme's `size.additions`/`size.deletions` integers in `themes.json`
-(`{"additions": 4200, "deletions": 1600}` → `"+4.2k/-1.6k"`).
+string rendered from the theme's `size.additions`/`size.deletions` integers in `themes.json` —
+abbreviate each value at ≥1000 to one decimal with `k`, below 1000 keep the raw integer
+(`{"additions": 4200, "deletions": 160}` → `"+4.2k/-160"`); the same rule applies to the
+`하위 그룹` table's `규모` cells.
 
 The `PR·커밋` cell of the `하위 그룹` table lists, in a single cell, **every** PR number (`#367`)
 and direct-commit short hash (`` `a1b2c3d` ``) belonging to that group: the group object's `prs`

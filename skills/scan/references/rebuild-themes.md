@@ -1,18 +1,22 @@
 # rebuild-themes — legacy overview.md → data/themes.json (one-time migration)
 
 Reconstructs `<repo-root>/.brag-doc/data/themes.json` from a legacy overview.md that predates the
-data/ directory. Followed by the **main context** of the `scan`, `new-theme`, and `deep-dive`
-skills when `data/themes.json` is missing but `overview.md` exists — this is not an agent
-instructions file. Requires `raw/prs.json`, `raw/commits.json`, `raw/meta.json`; the calling skill
+data/ directory. Followed by the **main context** of the `scan`, `new-theme`, `deep-dive`, and
+`entries` skills when `data/themes.json` is missing but `overview.md` exists — this is not an
+agent instructions file. Requires `raw/prs.json`, `raw/commits.json`, `raw/meta.json`; the calling skill
 checks they exist before invoking this.
 
 **Inputs to resolve before starting**: `<repo-root>` (absolute), `<rawDir>` =
 `<repo-root>/.brag-doc/raw`, `<dataDir>` = `<repo-root>/.brag-doc/data`.
 
-Two overview.md layouts exist in the wild and the parsing below handles both, detected by the
-theme table's header row: the **section-based** layout every release through 0.2.0 wrote, and the
-**merged-table** layout only unreleased builds wrote. An unrecognized header stops the migration,
-and the ref-union check below is the net for anything that parses but parses wrong.
+Two overview.md layouts exist and the parsing below handles both, detected by the theme table's
+header row: the **section-based** layout every release through 0.2.0 wrote, and the
+**merged-table** layout 0.3.0 itself renders. **Either header may carry a trailing `항목` column**
+(the `entries` skill appends one) — match on the leading columns and ignore any trailing
+`항목`/checkbox column; it carries nothing this migration needs, since checkbox state is derived
+from file existence at render time. An unrecognized header stops the migration. The ref-union
+check below catches dropped or invented PR/commit refs — **and only those**: a mis-parsed `title`,
+`summary`, `period`, or `slug` passes it, which is why the slug report at the end exists.
 
 ## Parse the legacy overview.md
 
@@ -41,9 +45,11 @@ Read `<repo-root>/.brag-doc/overview.md` and extract:
   row under `## 주제별 기여`, then follow the matching branch below.** Every field lands in the
   same place either way; only where you read it from differs.
 
-  **Layout A — section-based** (header `| # | 주제 | 기여 | 기간 | 규모 | 심층 |`). This is what
+  **Layout A — section-based** (header begins `| # | 주제 | 기여 | 기간 | 규모 | 심층 |`; a
+  trailing `항목` column from a 0.2.0 `entries` run still counts as Layout A). This is what
   every released version through 0.2.0 wrote, so it is the layout a real legacy run almost always
-  has. The table carries only counts; the per-theme `### <n>. <title>` sections carry the rest:
+  has — and a run that completed the full 0.2.0 pipeline (scan → deep-dive → entries) always has
+  the extra `항목` column. The table carries only counts; the per-theme `### <n>. <title>` sections carry the rest:
   - `title` from the section heading (`### <n>. <title>`), matching the row's `주제` cell
   - `slug` from the section's `- slug: <slug>` line
   - `summary` from the paragraph between the section heading and the `- slug:` line, collapsed to
@@ -55,10 +61,10 @@ Read `<repo-root>/.brag-doc/overview.md` and extract:
   - `signals` from the section's `- 심층 분석 후보 신호:` line, comma-split; `없음` → `[]`
   - `period` from the row's `기간` cell
 
-  **Layout B — merged table** (header `| # | 주제 | 요약 | 관련 기여 | 기간 | 규모 | 신호 | 심층 |`).
-  Written only by unreleased builds between the merge of the per-theme sections and 0.3.0, so you
-  will meet it mainly on a developer's checkout. There are no per-theme sections; read everything
-  from the row:
+  **Layout B — merged table** (header begins `| # | 주제 | 요약 | 관련 기여 | 기간 | 규모 | 신호 | 심층 |`,
+  with the same trailing-`항목` tolerance). This is the layout 0.3.0's own render writes, so
+  besides unreleased pre-0.3.0 builds it covers a current repo that lost `data/themes.json` but
+  kept overview.md. There are no per-theme sections; read everything from the row:
   - `title` and `slug` from the `주제` cell (`<title> (`<slug>`)`)
   - `summary` from the `요약` cell (verbatim)
   - `prs` (integers) and `commits` (short hashes) from every ref in the `관련 기여` cell
@@ -111,5 +117,12 @@ jq -n --slurpfile raw <rawDir>/commits.json --slurpfile t <dataDir>/themes.json.
 - Any `false` → `rm themes.json.tmp`, report which refs are missing/extra, and **stop** — do not
   guess assignments. Compute both directions with the same jq expressions, replacing `==` with
   `-`: `raw - themes` lists the refs the rebuild dropped, `themes - raw` the ones it invented.
+
+**Slug report (after adopting):** slugs are the join key to `deep-dive/<slug>/` and
+`entries/<slug>.md`, and the ref-union check cannot catch a mis-parsed slug. List the existing
+folders (`ls <repo-root>/.brag-doc/deep-dive/` and `ls <repo-root>/.brag-doc/entries/*.md`,
+tolerating "no matches") and **report** any of them whose slug appears nowhere in the rebuilt
+`themes[].slug` — do not fail, but surface the list so the user can spot a mis-parsed slug before
+the next render writes its checkbox as `[ ]`.
 
 This runs once per legacy repo; afterwards `data/themes.json` is always the source of truth.

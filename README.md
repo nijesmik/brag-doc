@@ -67,10 +67,12 @@ Everything lands under `.brag-doc/` at the repo root.
 
 Structured state lives in `data/*.json`; the markdown files are rendered from it. After a plugin
 update, re-run `scan` and pick "문서만 재렌더" to refresh document formats without recollecting or
-reclustering. A legacy run without `data/` is migrated on that same opt-in path: the first skill
-you run rebuilds `data/themes.json` from the existing overview.md. That rebuild needs `raw/` to
-still be present, and it stops without writing anything if its consistency check fails — re-run
-`scan` with "재수집" in that case.
+reclustering. A legacy run without `data/` is migrated automatically the first time `deep-dive`,
+`entries`, or `new-theme` runs — or when you pick `scan`'s "문서만 재렌더" — by rebuilding
+`data/themes.json` from the existing overview.md. The rebuild needs `raw/` to still be present,
+and it stops without writing anything if its consistency check fails. `scan`'s "재수집" and
+"재클러스터" do **not** migrate: they rebuild the themes from scratch with new slugs, which
+orphans existing `deep-dive/` and `entries/` folders — `scan` warns before you pick them.
 
 ## Requirements
 

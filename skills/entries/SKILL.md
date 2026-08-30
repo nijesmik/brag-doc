@@ -42,7 +42,9 @@ use AskUserQuestion with **multiSelect: true**; otherwise present a numbered lis
 comma-separated pick). Put each theme's title and PR count in the option descriptions.
 - If no theme has a deep-dive folder, tell the user to run the `deep-dive` skill first, and stop.
 - (If a selected theme already has `<repo-root>/.brag-doc/entries/<slug>.md`, ask the user per
-  theme: "재생성" — dispatch the agent normally, or "문서만 재전사" — dispatch it with
+  theme — in Claude Code use AskUserQuestion (one question per theme, or one multi-theme question
+  with a per-theme option pair); otherwise a numbered choice: "재생성" — dispatch the agent
+  normally, or "문서만 재전사" — dispatch it with
   `transcribeOnly: true` so it only re-renders the .md from the existing JSON. Offer "문서만 재전사"
   **only when `<repo-root>/.brag-doc/data/entries/<slug>.json` also exists** after the `mv` above —
   with no JSON there is nothing to transcribe, so 재생성 is then the only option and no question is

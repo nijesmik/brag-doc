@@ -12,7 +12,9 @@ From `themes.json` take `stats`, `themes[]`, `unclustered`; from `raw/meta.json`
 `gitAuthors` (array of author names) + `ghLogin` (login, or `none`) that fills the `계정` line.
 
 If `themes.json`'s `schemaVersion` is missing or is not `1`, stop and tell the user to re-run the
-`scan` skill — this procedure only renders schemaVersion 1.
+`scan` skill and pick **"재수집" or "재클러스터 (기존 raw 재사용)"** — those rebuild
+`themes.json`; "문서만 재렌더" would land on this same stop. This procedure only renders
+schemaVersion 1.
 
 Fill the template below with `data/themes.json` + `raw/meta.json` + `raw/prs.json` and save it to
 `<repo-root>/.brag-doc/overview.md`. **Render it yourself — do not delegate this to an agent.**
