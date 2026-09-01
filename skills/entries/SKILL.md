@@ -76,12 +76,17 @@ Each dispatch prompt must include:
 
 If an `entries/<slug>.md` already exists, it will be overwritten — note this in the final report.
 
-### Step 4: Final report
+### Step 4: Check the themes off in overview.md
 
-Report the generated `entries/` file paths and the entry count per theme. Tell the user
-each section of the `.md` (테마 전체, and each sub-group) opens with its own `⭐ 추천 조합` above the
-table: put `x` in the `✓` cell of the rows you want, and pick one of `주도`/`구현` where both
-appear. If any file was overwritten, say so.
+For the themes whose `entries/<slug>.md` was written in Step 3, mark their `entries` cell in
+`<repo-root>/.brag-doc/overview.md` by following
+[../scan/references/check-overview.md](../scan/references/check-overview.md) (paths are relative to
+this skill's directory) with `column` = `entries` and those themes' slugs. **Patch it yourself —
+do not delegate this to an agent.**
 
-Note that overview.md's `항목` column reflects file existence and updates on the next render
-(`scan` → "문서만 재렌더").
+### Step 5: Final report
+
+Report the generated `entries/` file paths and the entry count per theme, plus the overview.md
+result from Step 4. Tell the user each section of the `.md` (테마 전체, and each sub-group) opens
+with its own `⭐ 추천 조합` above the table: put `x` in the `✓` cell of the rows you want, and pick
+one of `주도`/`구현` where both appear. If any file was overwritten, say so.

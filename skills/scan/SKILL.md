@@ -114,7 +114,7 @@ overview.md is a rendered artifact derived from it.
 Render `<repo-root>/.brag-doc/overview.md` by following
 [references/render-overview.md](references/render-overview.md) exactly — **render it yourself; do
 not delegate this to an agent.** It reads `data/themes.json` (saved in Step 4) plus the `raw/`
-files, and derives the `심층`/`항목` checkbox columns from file existence.
+files, and derives the `deep-dive`/`entries` checkbox columns from file existence.
 
 ### Step 6: Final report
 
@@ -124,5 +124,5 @@ platform invokes it (`/brag-doc:deep-dive` in Claude Code, `$deep-dive` in Codex
 
 If this run went through "재수집" or "재클러스터", also note that the new themes carry new slugs, so
 any `deep-dive/<slug>/`, `entries/<slug>.md` and `data/entries/<slug>.json` from the old slugs are
-now orphaned — their `심층`/`항목` checkboxes simply stop appearing, and the folders stay on disk
+now orphaned — the old slugs simply lose their row in overview.md, and the folders stay on disk
 until the user deletes them.

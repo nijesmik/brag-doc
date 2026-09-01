@@ -53,14 +53,18 @@ on the first column, and put the second column in the date column.
 
 Fill the 테마 column from the theme each PR/commit belongs to (`미분류` if unclustered).
 
-**Checkbox columns are derived from file existence — never from a previous overview.md:**
+**Checkbox columns are derived from file existence — never from a previous overview.md. Both
+columns are always rendered, in this order and as the last two columns of the theme table, even
+when no theme has the file yet:**
 
-- `심층` cell: `[x](deep-dive/<slug>/index.md)` if `<repo-root>/.brag-doc/deep-dive/<slug>/index.md`
-  exists, else `[ ]`.
-- `항목` column: include it (right after `심층` in the header, separator, and every row) **only if**
-  `<repo-root>/.brag-doc/entries/<slug>.md` exists for at least one theme in the table. A theme's
-  cell is `[x](entries/<slug>.md)` if its file exists, else `[ ]`. If no theme has an entries
-  file, do not add the column.
+- `deep-dive` cell: `[x](deep-dive/<slug>/index.md)` if
+  `<repo-root>/.brag-doc/deep-dive/<slug>/index.md` exists, else `[ ]`.
+- `entries` cell: `[x](entries/<slug>.md)` if `<repo-root>/.brag-doc/entries/<slug>.md` exists,
+  else `[ ]`.
+
+The `deep-dive` and `entries` skills patch these two cells in place right after they write their
+files (see [check-overview.md](check-overview.md)), so the column names and their position at the
+end of the row are part of the contract — do not rename or reorder them.
 
 Check existence with a single `ls` per directory (`ls <repo-root>/.brag-doc/deep-dive/*/index.md`
 and `ls <repo-root>/.brag-doc/entries/*.md`, tolerating "no matches").
@@ -102,9 +106,9 @@ commit-only is fine — and if both `prs` and `commits` are empty, omit the enti
 
 ## 주제별 기여
 
-| # | 주제 | 요약 | 관련 기여 | 기간 | 규모 | 신호 | 심층 |
-|---|------|------|-----------|------|------|------|------|
-| 1 | <title> (`<slug>`) | <summary> | PR 2개 (#367, #380) · 커밋 2개 (`a1b2c3d`, `e4f5g6h`) | <period> | +<additions>/-<deletions> | <signals> | [ ] |
+| # | 주제 | 요약 | 관련 기여 | 기간 | 규모 | 신호 | deep-dive | entries |
+|---|------|------|-----------|------|------|------|-----------|---------|
+| 1 | <title> (`<slug>`) | <summary> | PR 2개 (#367, #380) · 커밋 2개 (`a1b2c3d`, `e4f5g6h`) | <period> | +<additions>/-<deletions> | <signals> | [ ] | [ ] |
 
 ## 미분류
 

@@ -184,10 +184,15 @@ and direct-commit short hash (`` `a1b2c3d` ``) belonging to that group: the grou
 from Step 3 first, then its `commits`, each in chronological order, separated by `, `. Omit
 whichever side is empty — a group can never have both empty.
 
-### Step 6: Final report
+### Step 6: Check the themes off in overview.md
+
+For the themes that produced an index.md in Step 5, mark their `deep-dive` cell in
+`<repo-root>/.brag-doc/overview.md` by following
+[../scan/references/check-overview.md](../scan/references/check-overview.md) (paths are relative to
+this skill's directory) with `column` = `deep-dive` and those themes' slugs. **Patch it yourself —
+do not delegate this to an agent.**
+
+### Step 7: Final report
 
 Report the generated `deep-dive/<slug>/` folders (index.md + group files) and each group's
-`oneLiner` returned by the agents.
-
-Note to the user that overview.md's `심층` checkbox reflects folder existence and updates on the
-next render — running `scan` and choosing "문서만 재렌더" refreshes it immediately if wanted.
+`oneLiner` returned by the agents, plus the overview.md result from Step 6.

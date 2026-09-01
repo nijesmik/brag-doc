@@ -11,10 +11,11 @@ checks they exist before invoking this.
 
 Two overview.md layouts exist and the parsing below handles both, detected by the theme table's
 header row: the **section-based** layout every release through 0.2.0 wrote, and the
-**merged-table** layout 0.3.0 itself renders. **Either header may carry a trailing `항목` column**
-(the `entries` skill appends one) — match on the leading columns and ignore any trailing
-`항목`/checkbox column; it carries nothing this migration needs, since checkbox state is derived
-from file existence at render time. An unrecognized header stops the migration. The ref-union
+**merged-table** layout 0.3.0 and later render. **Either header may carry trailing checkbox
+columns** — `| 심층 |` plus an optional `| 항목 |` through 0.3.0, `| deep-dive | entries |` since
+0.4.0 — match on the leading columns and ignore any trailing checkbox column; it carries nothing
+this migration needs, since checkbox state is derived from file existence at render time. An
+unrecognized header stops the migration. The ref-union
 check below catches dropped or invented PR/commit refs — **and only those**: a mis-parsed `title`,
 `summary`, `period`, or `slug` passes it, which is why the slug report at the end exists.
 
@@ -61,8 +62,9 @@ Read `<repo-root>/.brag-doc/overview.md` and extract:
   - `signals` from the section's `- 심층 분석 후보 신호:` line, comma-split; `없음` → `[]`
   - `period` from the row's `기간` cell
 
-  **Layout B — merged table** (header begins `| # | 주제 | 요약 | 관련 기여 | 기간 | 규모 | 신호 | 심층 |`,
-  with the same trailing-`항목` tolerance). This is the layout 0.3.0's own render writes, so
+  **Layout B — merged table** (header begins `| # | 주제 | 요약 | 관련 기여 | 기간 | 규모 | 신호 |`
+  and ends with the checkbox columns — `| deep-dive | entries |` since 0.4.0, `| 심층 |` with the
+  same trailing-`항목` tolerance in 0.3.0). This is the layout the current render writes, so
   besides unreleased pre-0.3.0 builds it covers a current repo that lost `data/themes.json` but
   kept overview.md. There are no per-theme sections; read everything from the row:
   - `title` and `slug` from the `주제` cell (`<title> (`<slug>`)`)
@@ -86,8 +88,8 @@ Read `<repo-root>/.brag-doc/overview.md` and extract:
       | {additions: (map(.additions) | add // 0), deletions: (map(.deletions) | add // 0)}'
     ```
 - `unclustered`: `{prs, commits}` from the `## 미분류` bullets' leading refs; a missing section or
-  missing side → `[]`. Ignore the `심층`/`항목` checkbox cells — status is derived from file
-  existence, never stored.
+  missing side → `[]`. Ignore the checkbox cells (`deep-dive`/`entries`, or `심층`/`항목` in an
+  older overview) — status is derived from file existence, never stored.
 
 Assemble `{"schemaVersion": 1, "stats": ..., "themes": [...], "unclustered": {...}}` and write it
 to `<dataDir>/themes.json.tmp` (`mkdir -p <dataDir>` first).

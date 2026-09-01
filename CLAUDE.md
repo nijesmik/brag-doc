@@ -36,5 +36,7 @@ Claude Code and Codex**.
   artifacts. Skills communicate through the JSON — never by parsing rendered markdown, except the
   deep-dive documents (their prose and frontmatter *are* the source), the one-time
   `rebuild-themes` migration, and render-overview's `계정` carry-over from a pre-0.3.0
-  overview.md. The `심층`/`항목` checkboxes in overview.md are derived from file existence at
-  render time.
+  overview.md. The `deep-dive`/`entries` checkbox columns are derived from file existence at
+  render time, and patched in place — one cell, no re-render — by `deep-dive`/`entries` right
+  after they write their files (`skills/scan/references/check-overview.md`) — a write-back into
+  the rendered document, never a read of state out of it.
